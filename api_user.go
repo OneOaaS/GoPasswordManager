@@ -1,10 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 
-	"goji.io/pat"
+	"goji.io/pattern"
 
+	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/net/context"
 )
 
@@ -12,8 +14,8 @@ import (
 GET /api/user/:id - get a user or the list of users
 */
 func handleGetUser(ctx context.Context, rw http.ResponseWriter, r *http.Request) {
-	id := pat.Param(ctx, "id")
-	if id != "" {
+	idi := ctx.Value(pattern.Variable("id"))
+	if id, _ := idi.(string); id != "" {
 		if u, err := UserStoreFromContext(ctx).GetUser(id); err != nil {
 			http.Error(rw, "not found", http.StatusNotFound)
 			return
@@ -21,7 +23,13 @@ func handleGetUser(ctx context.Context, rw http.ResponseWriter, r *http.Request)
 			RenderFromContext(ctx).JSON(rw, http.StatusOK, u)
 		}
 	} else { // if id == ""
-		notImplemented(ctx, rw, r)
+		if us, err := UserStoreFromContext(ctx).ListUsers(); err != nil {
+			rlog(ctx, "Could not list users: ", err)
+			http.Error(rw, "internal server error", http.StatusInternalServerError)
+			return
+		} else {
+			RenderFromContext(ctx).JSON(rw, http.StatusOK, us)
+		}
 	}
 }
 
@@ -34,7 +42,42 @@ POST /api/user - create a user
 }
 */
 func handlePostUser(ctx context.Context, rw http.ResponseWriter, r *http.Request) {
-	notImplemented(ctx, rw, r)
+	var ui struct {
+		ID       string `json:"id"`
+		Name     string `json:"name"`
+		Password string `json:"password"`
+	}
+	var u User
+
+	us := UserStoreFromContext(ctx)
+
+	if err := json.NewDecoder(r.Body).Decode(&ui); err != nil {
+		rlog(ctx, "Could not decode JSON: ", err)
+		http.Error(rw, "invalid JSON", http.StatusBadRequest)
+		return
+	} else if ui.ID == "" {
+		http.Error(rw, "invalid id", http.StatusBadRequest)
+		return
+	} else if ui.Password == "" {
+		http.Error(rw, "invalid password", http.StatusBadRequest)
+		return
+	} else if pass, err := bcrypt.GenerateFromPassword([]byte(ui.Password), bcrypt.DefaultCost); err != nil {
+		rlog(ctx, "Could not hash password: ", err)
+		http.Error(rw, "could not hash password", http.StatusInternalServerError)
+		return
+	} else {
+		u.ID = ui.ID
+		u.Name = ui.Name
+		u.Password = pass
+	}
+
+	if err := us.PostUser(u); err != nil {
+		rlog(ctx, "Could not create user: ", err)
+		http.Error(rw, "could not create user", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(rw, r, ui.ID, http.StatusCreated)
 }
 
 /*

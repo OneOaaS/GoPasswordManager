@@ -7,13 +7,26 @@ import (
 	"golang.org/x/net/context"
 )
 
-// A User represents a user.
-type User struct {
+// UserMeta represents short metadata about a user.
+type UserMeta struct {
 	// ID is the user's ID (what users use to log in)
 	ID string `json:"id"`
 
 	// Name is the user's full name.
 	Name string `json:"name"`
+}
+
+// UserFull contains all public information about a user.
+type UserFull struct {
+	UserMeta
+
+	// PublicKeys is the list of public keys owned by the user
+	PublicKeys []string
+}
+
+// User contains all public and private information about a user.
+type User struct {
+	UserFull
 
 	// Password is the hash (bcrypt) of the user's authentication password.
 	Password []byte `json:"-"`
@@ -21,12 +34,17 @@ type User struct {
 	// RequiresPasswordReset is true if the password needs to be reset by the
 	// user.
 	RequiresPasswordReset bool `json:"requiresPasswordReset"`
+
+	// PrivateKeys is the list of private keys owned by the user
+	PrivateKeys []string
 }
 
 // UserStore represents a place to store users.
 type UserStore interface {
 	// GetUser retrieves the user from the store with the given id.
 	GetUser(userID string) (User, error)
+	// ListUsers retrieves metadata about all users in the store.
+	ListUsers() ([]UserMeta, error)
 	// PostUser adds a user to the store. The ID and Password fields of the
 	// user must not be empty.
 	PostUser(User) error
@@ -65,13 +83,20 @@ func (s StaticUserStore) AddUser(id, name, password string) {
 	if err != nil {
 		panic(err)
 	}
-	s[id] = User{
-		ID:       id,
-		Name:     name,
-		Password: pass,
-	}
+	var u User
+	u.ID = id
+	u.Name = name
+	u.Password = pass
+	s[id] = u
 }
 
+func (s StaticUserStore) ListUsers() ([]UserMeta, error) {
+	l := make([]UserMeta, 0, len(s))
+	for _, u := range s {
+		l = append(l, u.UserMeta)
+	}
+	return l, nil
+}
 func (s StaticUserStore) PostUser(User) error            { return errors.New("not implemented") }
 func (s StaticUserStore) PutUser(User) error             { return errors.New("not implemented") }
 func (s StaticUserStore) DeleteUser(userID string) error { return errors.New("not implemented") }
