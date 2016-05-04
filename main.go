@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 
+	"github.com/goji/ctx-csrf"
 	"github.com/gorilla/securecookie"
 
 	"goji.io"
@@ -29,6 +30,12 @@ func main() {
 
 	mux := goji.NewMux()
 	apiMux := goji.SubMux()
+
+	mux.UseC(csrf.Protect(
+		config.CookieSecret,
+		csrf.RequestHeader("X-XSRF-TOKEN"),
+		csrf.CookieName("XSRF-TOKEN"),
+	))
 
 	apiMux.UseC(Auth)
 
