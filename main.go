@@ -3,6 +3,8 @@ package main
 import (
 	"net/http"
 
+	"github.com/gorilla/securecookie"
+
 	"goji.io"
 	"goji.io/pat"
 	"golang.org/x/net/context"
@@ -17,9 +19,13 @@ func main() {
 	us := StaticUserStore{}
 	us.AddUser("tolar2", "Jeffrey Tolar", "tolar2")
 
+	sc := securecookie.New(config.CookieSecret, nil)
+	sc.SetSerializer(securecookie.JSONEncoder{})
+
 	rootCtx := context.Background()
 	rootCtx = ContextWithConfig(rootCtx, config)
 	rootCtx = ContextWithUserStore(rootCtx, us)
+	rootCtx = ContextWithSecureCookie(rootCtx, sc)
 
 	mux := goji.NewMux()
 	apiMux := goji.SubMux()
@@ -27,7 +33,7 @@ func main() {
 	apiMux.UseC(Auth)
 
 	mux.HandleFuncC(pat.Post("/login"), PostLogin)
-	mux.HandleC(pat.New("/api"), apiMux)
+	mux.HandleC(pat.New("/api/*"), apiMux)
 
 	mux.Handle(pat.New("/*"), http.FileServer(http.Dir("app/")))
 

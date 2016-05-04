@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -47,19 +46,16 @@ func PostLogin(ctx context.Context, rw http.ResponseWriter, r *http.Request) {
 		UserID: u.ID,
 		Time:   time.Now(),
 	}
-	s.Sign(config.CookieSecret)
 
-	b, err := json.Marshal(s)
-	if err != nil {
+	if value, err := SecureCookieFromContext(ctx).Encode(config.CookieName, s); err != nil {
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 		return
+	} else {
+		http.SetCookie(rw, &http.Cookie{
+			Name:  config.CookieName,
+			Value: value,
+		})
 	}
-	http.SetCookie(rw, &http.Cookie{
-		Name:  config.CookieName,
-		Value: base64.URLEncoding.EncodeToString(b),
-	})
-
-	// http.Redirect(
 }
 
 // Auth resumes a session.
@@ -72,13 +68,7 @@ func Auth(next goji.Handler) goji.Handler {
 		if cookie, err := r.Cookie(config.CookieName); err != nil {
 			http.Error(rw, "missing auth cookie", http.StatusBadRequest)
 			return
-		} else if b, err := base64.URLEncoding.DecodeString(cookie.Value); err != nil {
-			http.Error(rw, "invalid auth cookie", http.StatusBadRequest)
-			return
-		} else if err := json.Unmarshal(b, &s); err != nil {
-			http.Error(rw, "invalid auth cookie", http.StatusBadRequest)
-			return
-		} else if !s.Verify(config.CookieSecret) {
+		} else if err := SecureCookieFromContext(ctx).Decode(config.CookieName, cookie.Value, &s); err != nil {
 			http.Error(rw, "invalid auth cookie", http.StatusBadRequest)
 			return
 		}

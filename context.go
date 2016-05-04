@@ -1,6 +1,9 @@
 package main
 
-import "golang.org/x/net/context"
+import (
+	"github.com/gorilla/securecookie"
+	"golang.org/x/net/context"
+)
 
 type ctxKey int
 
@@ -9,6 +12,7 @@ const (
 	ctxUserKey
 	ctxUserStoreKey
 	ctxSessionKey
+	ctxSecureCookieKey
 )
 
 func ConfigFromContext(ctx context.Context) Config {
@@ -37,4 +41,11 @@ func SessionFromContext(ctx context.Context) Session {
 }
 func ContextWithSession(parent context.Context, s Session) context.Context {
 	return context.WithValue(parent, ctxSessionKey, s)
+}
+
+func SecureCookieFromContext(ctx context.Context) *securecookie.SecureCookie {
+	return ctx.Value(ctxSecureCookieKey).(*securecookie.SecureCookie)
+}
+func ContextWithSecureCookie(parent context.Context, s *securecookie.SecureCookie) context.Context {
+	return context.WithValue(parent, ctxSecureCookieKey, s)
 }
