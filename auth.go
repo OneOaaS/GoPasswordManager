@@ -13,15 +13,20 @@ import (
 )
 
 func PostLogin(ctx context.Context, rw http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
-		http.Error(rw, "could not parse form", http.StatusBadRequest)
+	config := ConfigFromContext(ctx)
+
+	var params struct {
+		Username string
+		Password string
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+		http.Error(rw, "invalid JSON", http.StatusBadRequest)
 		return
 	}
 
-	config := ConfigFromContext(ctx)
-
-	id := r.FormValue("username")
-	pass := r.FormValue("password")
+	id := params.Username
+	pass := params.Password
 	if id == "" || pass == "" {
 		http.Error(rw, "missing parameter", http.StatusBadRequest)
 		return
