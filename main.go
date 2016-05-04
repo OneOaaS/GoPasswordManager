@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"runtime/debug"
 
 	"github.com/elithrar/goji-logger"
 	"github.com/goji/ctx-csrf"
@@ -14,6 +15,19 @@ import (
 	"goji.io/pat"
 	"golang.org/x/net/context"
 )
+
+func PanicHandler(next goji.Handler) goji.Handler {
+	return goji.HandlerFunc(func(ctx context.Context, rw http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if r := recover(); r != nil {
+				rw.WriteHeader(http.StatusInternalServerError)
+				debug.PrintStack()
+				log.Print("Recovering from panic: ", r)
+			}
+		}()
+		next.ServeHTTPC(ctx, rw, r)
+	})
+}
 
 func main() {
 	config := Config{
@@ -39,6 +53,7 @@ func main() {
 	mux := goji.NewMux()
 	apiMux := goji.SubMux()
 
+	mux.UseC(PanicHandler)
 	mux.UseC(logger.RequestID)
 	mux.UseC(logger.Logger)
 
