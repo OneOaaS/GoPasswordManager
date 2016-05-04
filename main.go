@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/goji/ctx-csrf"
 	"github.com/gorilla/securecookie"
@@ -50,8 +51,11 @@ func main() {
 
 	mux.Handle(pat.New("/*"), http.FileServer(http.Dir("app/")))
 
-	// TODO: make this configurable
-	panic(http.ListenAndServe(":8080", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	addr := ":8080"
+	if port := os.Getenv("PORT"); port != "" {
+		addr = ":" + port
+	}
+	panic(http.ListenAndServe(addr, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		mux.ServeHTTPC(rootCtx, w, r)
 	})))
 }
