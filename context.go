@@ -1,6 +1,10 @@
 package main
 
 import (
+	"fmt"
+	"log"
+
+	"github.com/elithrar/goji-logger"
 	"github.com/gorilla/securecookie"
 	"github.com/unrolled/render"
 	"golang.org/x/net/context"
@@ -16,6 +20,15 @@ const (
 	ctxSecureCookieKey
 	ctxRenderKey
 )
+
+func rlog(ctx context.Context, args ...interface{}) {
+	reqID := logger.GetReqID(ctx)
+	log.Printf("[%s] %s", reqID, fmt.Sprint(args...))
+}
+func rlogf(ctx context.Context, format string, args ...interface{}) {
+	reqID := logger.GetReqID(ctx)
+	log.Printf("[%s] %s", reqID, fmt.Sprintf(format, args...))
+}
 
 func ConfigFromContext(ctx context.Context) Config {
 	return ctx.Value(ctxConfigKey).(Config)
