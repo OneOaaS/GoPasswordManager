@@ -1,9 +1,35 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"net/http"
+
+	"goji.io"
+	"goji.io/pat"
+	"golang.org/x/net/context"
+)
 
 func main() {
-	router := gin.Default()
+	config := Config{
+		CookieSecret: []byte("alskjdlkfaj zxcxvnafsflkasj rewoiiw"),
+		CookieName:   "pass",
+	}
 
-	router.Run()
+	us := StaticUserStore{}
+	us.AddUser("tolar2", "Jeffrey Tolar", "tolar2")
+
+	rootCtx := context.Background()
+	rootCtx = ContextWithConfig(rootCtx, config)
+	rootCtx = ContextWithUserStore(rootCtx, us)
+
+	mux := goji.NewMux()
+	apiMux := goji.SubMux()
+
+	apiMux.UseC(Auth)
+
+	mux.HandleC(pat.New("/api"), apiMux)
+
+	// TODO: make this configurable
+	panic(http.ListenAndServe(":8080", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mux.ServeHTTPC(rootCtx, w, r)
+	})))
 }
