@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/elithrar/goji-logger"
 	"github.com/goji/ctx-csrf"
 	"github.com/gorilla/securecookie"
 
@@ -31,6 +32,9 @@ func main() {
 
 	mux := goji.NewMux()
 	apiMux := goji.SubMux()
+
+	mux.UseC(logger.RequestID)
+	mux.UseC(logger.Logger)
 
 	mux.UseC(csrf.Protect(
 		config.CookieSecret,
