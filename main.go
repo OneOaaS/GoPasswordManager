@@ -29,6 +29,8 @@ func main() {
 	mux.HandleFuncC(pat.Post("/login"), PostLogin)
 	mux.HandleC(pat.New("/api"), apiMux)
 
+	mux.Handle(pat.New("/*"), http.FileServer(http.Dir("app/")))
+
 	// TODO: make this configurable
 	panic(http.ListenAndServe(":8080", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		mux.ServeHTTPC(rootCtx, w, r)
