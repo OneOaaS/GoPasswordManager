@@ -48,6 +48,7 @@ func main() {
 	rootCtx = ContextWithSecureCookie(rootCtx, sc)
 	rootCtx = ContextWithRender(rootCtx, render.New(render.Options{
 		IsDevelopment: config.Dev,
+		IndentJSON:    config.Dev,
 	}))
 
 	mux := goji.NewMux()
