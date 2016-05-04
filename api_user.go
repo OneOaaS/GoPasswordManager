@@ -3,6 +3,8 @@ package main
 import (
 	"net/http"
 
+	"goji.io/pat"
+
 	"golang.org/x/net/context"
 )
 
@@ -10,7 +12,17 @@ import (
 GET /api/user/:id - get a user or the list of users
 */
 func handleGetUser(ctx context.Context, rw http.ResponseWriter, r *http.Request) {
-	notImplemented(ctx, rw, r)
+	id := pat.Param(ctx, "id")
+	if id != "" {
+		if u, err := UserStoreFromContext(ctx).GetUser(id); err != nil {
+			http.Error(rw, "not found", http.StatusNotFound)
+			return
+		} else {
+			RenderFromContext(ctx).JSON(rw, http.StatusOK, u)
+		}
+	} else { // if id == ""
+		notImplemented(ctx, rw, r)
+	}
 }
 
 /*
