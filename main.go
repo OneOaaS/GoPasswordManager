@@ -7,6 +7,7 @@ import (
 	"github.com/elithrar/goji-logger"
 	"github.com/goji/ctx-csrf"
 	"github.com/gorilla/securecookie"
+	"github.com/unrolled/render"
 
 	"goji.io"
 	"goji.io/pat"
@@ -17,6 +18,7 @@ func main() {
 	config := Config{
 		CookieSecret: []byte("alskjdlkfaj zxcxvnafsflkasj rewoiiw"),
 		CookieName:   "pass",
+		Dev:          true,
 	}
 
 	us := StaticUserStore{}
@@ -29,6 +31,9 @@ func main() {
 	rootCtx = ContextWithConfig(rootCtx, config)
 	rootCtx = ContextWithUserStore(rootCtx, us)
 	rootCtx = ContextWithSecureCookie(rootCtx, sc)
+	rootCtx = ContextWithRender(rootCtx, render.New(render.Options{
+		IsDevelopment: config.Dev,
+	}))
 
 	mux := goji.NewMux()
 	apiMux := goji.SubMux()

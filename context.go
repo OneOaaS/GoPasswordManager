@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gorilla/securecookie"
+	"github.com/unrolled/render"
 	"golang.org/x/net/context"
 )
 
@@ -13,6 +14,7 @@ const (
 	ctxUserStoreKey
 	ctxSessionKey
 	ctxSecureCookieKey
+	ctxRenderKey
 )
 
 func ConfigFromContext(ctx context.Context) Config {
@@ -48,4 +50,11 @@ func SecureCookieFromContext(ctx context.Context) *securecookie.SecureCookie {
 }
 func ContextWithSecureCookie(parent context.Context, s *securecookie.SecureCookie) context.Context {
 	return context.WithValue(parent, ctxSecureCookieKey, s)
+}
+
+func RenderFromContext(ctx context.Context) *render.Render {
+	return ctx.Value(ctxRenderKey).(*render.Render)
+}
+func ContextWithRender(parent context.Context, s *render.Render) context.Context {
+	return context.WithValue(parent, ctxRenderKey, s)
 }
