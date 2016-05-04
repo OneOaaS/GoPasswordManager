@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"os"
 
@@ -41,11 +42,15 @@ func main() {
 	mux.UseC(logger.RequestID)
 	mux.UseC(logger.Logger)
 
-	mux.UseC(csrf.Protect(
-		config.CookieSecret,
-		csrf.RequestHeader("X-XSRF-TOKEN"),
-		csrf.CookieName("XSRF-TOKEN"),
-	))
+	if config.Dev {
+		log.Print("[warning] Dev mode enabled: disabling CSRF protection")
+	} else {
+		mux.UseC(csrf.Protect(
+			config.CookieSecret,
+			csrf.RequestHeader("X-XSRF-TOKEN"),
+			csrf.CookieName("XSRF-TOKEN"),
+		))
+	}
 
 	apiMux.UseC(Auth)
 
@@ -64,6 +69,7 @@ func main() {
 	if port := os.Getenv("PORT"); port != "" {
 		addr = ":" + port
 	}
+	log.Print("Listening on ", addr)
 	panic(http.ListenAndServe(addr, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		mux.ServeHTTPC(rootCtx, w, r)
 	})))
