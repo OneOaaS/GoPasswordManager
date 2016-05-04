@@ -26,6 +26,7 @@ func main() {
 
 	apiMux.UseC(Auth)
 
+	mux.HandleFuncC(pat.Post("/login"), PostLogin)
 	mux.HandleC(pat.New("/api"), apiMux)
 
 	// TODO: make this configurable
