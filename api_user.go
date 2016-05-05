@@ -85,14 +85,18 @@ func handlePostUser(ctx context.Context, rw http.ResponseWriter, r *http.Request
 PATCH /api/user/:id - modify a user (can only modify the current user)
 {
   "name": "Full Name",
+  "oldPassword": "old plaintext password",
   "password": "plaintext password"
 }
+
+oldPassword is only needed if password is being set.
 */
 func handlePatchUser(ctx context.Context, rw http.ResponseWriter, r *http.Request) {
 	var ui struct {
-		ID       *string `json:"id"` // ignored
-		Name     *string `json:"name"`
-		Password *string `json:"password"`
+		ID          *string `json:"id"` // ignored
+		Name        *string `json:"name"`
+		OldPassword *string `json:"oldPassword"`
+		Password    *string `json:"password"`
 	}
 
 	us := UserStoreFromContext(ctx)
@@ -111,7 +115,13 @@ func handlePatchUser(ctx context.Context, rw http.ResponseWriter, r *http.Reques
 		u.Name = *ui.Name
 	}
 	if ui.Password != nil {
-		if pass, err := bcrypt.GenerateFromPassword([]byte(*ui.Password), bcrypt.DefaultCost); err != nil {
+		if ui.OldPassword == nil {
+			http.Error(rw, "missing oldPassword", http.StatusBadRequest)
+			return
+		} else if err := bcrypt.CompareHashAndPassword(u.Password, []byte(*ui.OldPassword)); err != nil {
+			http.Error(rw, "invalid password", http.StatusBadRequest)
+			return
+		} else if pass, err := bcrypt.GenerateFromPassword([]byte(*ui.Password), bcrypt.DefaultCost); err != nil {
 			rlog(ctx, "Could not hash password: ", err)
 			http.Error(rw, "could not hash password", http.StatusInternalServerError)
 			return

@@ -81,7 +81,14 @@ func (s DBStore) PutUser(u User) error {
 
 // DeleteUser removes the user from the store with the given id.
 func (s DBStore) DeleteUser(userID string) error {
-	return ErrNotImplemented
+	if userID == "" {
+		return errors.New("missing id")
+	}
+	_, err := s.DB.Exec(`DELETE FROM users
+	                     WHERE uid = ?;`,
+		userID,
+	)
+	return err
 }
 
 // GetPublicKeys gets a list of public keys that belong to the user.
