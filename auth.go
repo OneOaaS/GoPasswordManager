@@ -76,6 +76,7 @@ func Auth(next goji.Handler) goji.Handler {
 
 		u, err := GetUser(ctx, s.UserID)
 		if err != nil {
+			rlogf(ctx, "Got unknown user %q from auth cookie: %v", s.UserID, err)
 			http.Error(rw, "unknown user", http.StatusBadRequest)
 			return
 		}
