@@ -3,6 +3,8 @@ package main
 import (
 	"errors"
 
+	"golang.org/x/crypto/openpgp/packet"
+
 	"github.com/jmoiron/sqlx"
 )
 
@@ -33,22 +35,18 @@ type DBStore struct {
 	DB *sqlx.DB
 }
 
-// GetUser retrieves the user from the store with the given id.
 func (s DBStore) GetUser(userID string) (User, error) {
 	var u User
 	err := s.DB.Get(&u, `SELECT uid AS id, name, password, requiresPasswordReset FROM users WHERE uid = ?;`, userID)
 	return u, err
 }
 
-// ListUsers retrieves metadata about all users in the store.
 func (s DBStore) ListUsers() ([]UserMeta, error) {
 	var us []UserMeta
 	err := s.DB.Select(&us, `SELECT uid AS id, name FROM users;`)
 	return us, err
 }
 
-// PostUser adds a user to the store. The ID and Password fields of the
-// user must not be empty.
 func (s DBStore) PostUser(u User) error {
 	if u.ID == "" {
 		return errors.New("missing id")
@@ -62,7 +60,6 @@ func (s DBStore) PostUser(u User) error {
 	return err
 }
 
-// PutUser updates a user in the store. The ID field must not be blank.
 func (s DBStore) PutUser(u User) error {
 	if u.ID == "" {
 		return errors.New("missing id")
@@ -79,7 +76,6 @@ func (s DBStore) PutUser(u User) error {
 	return err
 }
 
-// DeleteUser removes the user from the store with the given id.
 func (s DBStore) DeleteUser(userID string) error {
 	if userID == "" {
 		return errors.New("missing id")
@@ -91,22 +87,34 @@ func (s DBStore) DeleteUser(userID string) error {
 	return err
 }
 
-// GetPublicKeys gets a list of public keys that belong to the user.
-func (s DBStore) GetPublicKeys(userID string) ([]string, error) {
+func (s DBStore) GetPublicKeys(userID string) ([]*packet.PublicKey, error) {
 	return nil, ErrNotImplemented
 }
 
-// AddPublicKey associates a key with a user.
-func (s DBStore) AddPublicKey(userID, keyID string) error {
+func (s DBStore) GetPublicKeyIDs(userID string) ([]string, error) {
+	return nil, ErrNotImplemented
+}
+
+func (s DBStore) AddPublicKey(userID string, key *packet.PublicKey) error {
 	return ErrNotImplemented
 }
 
-// GetPrivateKeys gets a list of private key that belong to the user.
-func (s DBStore) GetPrivateKeys(userID string) ([]string, error) {
+func (s DBStore) RemovePublicKey(userID, keyID string) error {
+	return ErrNotImplemented
+}
+
+func (s DBStore) GetPrivateKeys(userID string) ([]*packet.PrivateKey, error) {
 	return nil, ErrNotImplemented
 }
 
-// AddPrivateKey associates a key with a user.
-func (s DBStore) AddPrivateKey(userID, keyID string) error {
+func (s DBStore) GetPrivateKeyIDs(userID string) ([]string, error) {
+	return nil, ErrNotImplemented
+}
+
+func (s DBStore) AddPrivateKey(userID string, key *packet.PrivateKey) error {
+	return ErrNotImplemented
+}
+
+func (s DBStore) RemovePrivateKey(userID, keyID string) error {
 	return ErrNotImplemented
 }

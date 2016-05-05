@@ -1,6 +1,9 @@
 package main
 
-import "golang.org/x/net/context"
+import (
+	"golang.org/x/crypto/openpgp/packet"
+	"golang.org/x/net/context"
+)
 
 // UserMeta represents short metadata about a user.
 type UserMeta struct {
@@ -43,20 +46,31 @@ type UserStore interface {
 	// PostUser adds a user to the store. The ID and Password fields of the
 	// user must not be empty.
 	PostUser(User) error
-	// PutUser updates a user in the store. The ID field must not be blank.
+	// PutUser updates a user's metadata in the store. The ID and password
+	// fields must not be blank.
 	PutUser(User) error
 	// DeleteUser removes the user from the store with the given id.
 	DeleteUser(userID string) error
 
-	// GetPublicKeys gets a list of public keys that belong to the user.
-	GetPublicKeys(userID string) ([]string, error)
+	// GetPublicKeys gets a list of public keys that belong to a user.
+	GetPublicKeys(userID string) ([]*packet.PublicKey, error)
+	// GetPublicKeyIDs gets a list of public key IDs that belong to the user.
+	GetPublicKeyIDs(userID string) ([]string, error)
 	// AddPublicKey associates a key with a user.
-	AddPublicKey(userID, keyID string) error
+	AddPublicKey(userID string, keyID *packet.PublicKey) error
+	// RemovePublicKey removes a key from a user. The key itself is not removed
+	// from the store, however.
+	RemovePublicKey(userID, keyID string) error
 
-	// GetPrivateKeys gets a list of private key that belong to the user.
-	GetPrivateKeys(userID string) ([]string, error)
+	// GetPrivateKeys gets a list of private keys that belong to the user.
+	GetPrivateKeys(userID string) ([]*packet.PrivateKey, error)
+	// GetPrivateKeyIDs gets a list of private key IDs that belong to the user.
+	GetPrivateKeyIDs(userID string) ([]string, error)
 	// AddPrivateKey associates a key with a user.
-	AddPrivateKey(userID, keyID string) error
+	AddPrivateKey(userID string, key *packet.PrivateKey) error
+	// RemovePrivateKey removes a key from a user. The key itself should also
+	// be removed from the store.
+	RemovePrivateKey(userID, keyID string) error
 }
 
 func GetUser(ctx context.Context, userID string) (User, error) {
