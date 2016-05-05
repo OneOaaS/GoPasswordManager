@@ -93,6 +93,13 @@ func main() {
 	apiMux.HandleFuncC(pat.Get("/publicKey"), handleGetPublicKeys)
 	apiMux.HandleFuncC(pat.Get("/publicKey/:id"), handleGetPublicKey)
 
+	// private key-related endpoints
+	apiMux.HandleFuncC(pat.Get("/user/:userID/privateKey"), handleListUserPrivateKey)
+	apiMux.HandleFuncC(pat.Get("/user/:userID/privateKey/:keyID"), handleGetUserPrivateKey)
+	apiMux.HandleFuncC(pat.Post("/user/:userID/privateKey"), handlePostUserPrivateKey)
+	apiMux.HandleFuncC(pat.Put("/user/:userID/privateKey/:keyID"), handlePutUserPrivateKey)
+	apiMux.HandleFuncC(pat.Delete("/user/:userID/privateKey/:keyID"), handleDeleteUserPrivateKey)
+
 	mux.HandleFuncC(pat.Post("/login"), PostLogin)
 	mux.HandleC(pat.New("/api/*"), apiMux)
 
