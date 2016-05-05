@@ -270,10 +270,21 @@ func (s DBStore) AddPrivateKey(userID, keyID string, armoredKey []byte) error {
 	return tx.Commit()
 }
 
+func (s DBStore) PutPrivateKey(userID, keyID string, armoredKey []byte) error {
+	_, err := s.DB.Exec(`UPDATE private_keys SET armored = ? WHERE kid = ? AND uid = ?;`, armoredKey, keyID, userID)
+	return err
+}
+
 func (s DBStore) RemovePrivateKey(userID, keyID string) error {
 	_, err := s.DB.Exec(`DELETE FROM private_keys
 	                     WHERE kid = ? AND uid = ?;`,
 		keyID, userID,
 	)
 	return err
+}
+
+func (s DBStore) GetPrivateKey(keyID string) (string, []byte, error) {
+	var key dbKey
+	err := s.DB.Get(&key, `SELECT uid, armored FROM private_keys WHERE kid = ?;`, keyID)
+	return key.UserID.String, key.ArmoredKey, err
 }

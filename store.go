@@ -79,9 +79,14 @@ type Store interface {
 	GetPrivateKeyIDs(userID string) ([]string, error)
 	// AddPrivateKey associates a key with a user.
 	AddPrivateKey(userID, keyID string, armoredKey []byte) error
+	// PutPrivateKey updates a user's private key.
+	PutPrivateKey(userID, keyID string, armoredKey []byte) error
 	// RemovePrivateKey removes a key from a user. The key itself should also
 	// be removed from the store.
 	RemovePrivateKey(userID, keyID string) error
+
+	// GetPrivateKey gets information about a private key.
+	GetPrivateKey(keyID string) (user string, armoredKey []byte, err error)
 }
 
 func GetUser(ctx context.Context, userID string) (User, error) {
