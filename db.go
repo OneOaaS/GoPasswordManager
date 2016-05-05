@@ -6,6 +6,8 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+var ErrMissingID = errors.New("missing id")
+
 const initQuery = `
 CREATE TABLE IF NOT EXISTS users (
 	uid TEXT PRIMARY KEY NOT NULL,
@@ -48,7 +50,7 @@ func (s DBStore) ListUsers() ([]UserMeta, error) {
 
 func (s DBStore) PostUser(u User) error {
 	if u.ID == "" {
-		return errors.New("missing id")
+		return ErrMissingID
 	} else if len(u.Password) == 0 {
 		return errors.New("missing password")
 	}
@@ -61,7 +63,7 @@ func (s DBStore) PostUser(u User) error {
 
 func (s DBStore) PutUser(u User) error {
 	if u.ID == "" {
-		return errors.New("missing id")
+		return ErrMissingID
 	} else if len(u.Password) == 0 {
 		return errors.New("missing password")
 	}
@@ -77,7 +79,7 @@ func (s DBStore) PutUser(u User) error {
 
 func (s DBStore) DeleteUser(userID string) error {
 	if userID == "" {
-		return errors.New("missing id")
+		return ErrMissingID
 	}
 	_, err := s.DB.Exec(`DELETE FROM users
 	                     WHERE uid = ?;`,
