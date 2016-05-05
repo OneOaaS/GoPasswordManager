@@ -38,6 +38,8 @@ CREATE TABLE IF NOT EXISTS private_keys (
 func initDB(driver, dsn string) (DBStore, error) {
 	if db, err := sqlx.Open(driver, dsn); err != nil {
 		return DBStore{}, err
+	} else if _, err := db.Exec(`PRAGMA foreign_keys = ON;`); err != nil {
+		return DBStore{}, err
 	} else if _, err := db.Exec(initQuery); err != nil {
 		return DBStore{}, err
 	} else {
