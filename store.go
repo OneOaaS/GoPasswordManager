@@ -66,7 +66,12 @@ type Store interface {
 	// GetUserForPublicKey finds the user id owning the given key. If the key
 	// does not belong to any users, GetUserForPublicKey returns the empty
 	// string.
-	GetUserForPublicKey(keyID string) (string, error)
+	GetUserForPublicKey(keyID string) (user string, err error)
+
+	// GetPublicKey gets information about a public key. If the key is an
+	// external public key (i.e., it doesn't belong to any user), the first
+	// return value will be the empty string.
+	GetPublicKey(keyID string) (user string, armoredKey []byte, err error)
 
 	// GetPrivateKeys gets the private keys that belong to the user.
 	GetPrivateKeys(userID string) (map[string][]byte, error)

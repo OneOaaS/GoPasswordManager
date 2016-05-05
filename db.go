@@ -211,6 +211,12 @@ func (s DBStore) GetUserForPublicKey(keyID string) (string, error) {
 	return userID.String, err
 }
 
+func (s DBStore) GetPublicKey(keyID string) (string, []byte, error) {
+	var key dbKey
+	err := s.DB.Get(&key, `SELECT uid, armored FROM public_keys WHERE kid = ?;`, keyID)
+	return key.UserID.String, key.ArmoredKey, err
+}
+
 func (s DBStore) GetPrivateKeys(userID string) (map[string][]byte, error) {
 	if userID == "" {
 		return nil, ErrMissingID
