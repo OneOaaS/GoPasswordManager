@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"path"
 
 	"goji.io/pattern"
 
@@ -77,7 +78,7 @@ func handlePostUser(ctx context.Context, rw http.ResponseWriter, r *http.Request
 		return
 	}
 
-	http.Redirect(rw, r, ui.ID, http.StatusCreated)
+	http.Redirect(rw, r, path.Join("user", ui.ID), http.StatusCreated)
 }
 
 /*

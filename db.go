@@ -1,6 +1,10 @@
 package main
 
-import "github.com/jmoiron/sqlx"
+import (
+	"errors"
+
+	"github.com/jmoiron/sqlx"
+)
 
 const initQuery = `
 CREATE TABLE IF NOT EXISTS users (
@@ -38,13 +42,24 @@ func (s DBStore) GetUser(userID string) (User, error) {
 
 // ListUsers retrieves metadata about all users in the store.
 func (s DBStore) ListUsers() ([]UserMeta, error) {
-	return nil, ErrNotImplemented
+	var us []UserMeta
+	err := s.DB.Select(&us, `SELECT uid AS id, name FROM users;`)
+	return us, err
 }
 
 // PostUser adds a user to the store. The ID and Password fields of the
 // user must not be empty.
-func (s DBStore) PostUser(User) error {
-	return ErrNotImplemented
+func (s DBStore) PostUser(u User) error {
+	if u.ID == "" {
+		return errors.New("missing id")
+	} else if len(u.Password) == 0 {
+		return errors.New("missing password")
+	}
+	_, err := s.DB.Exec(`INSERT INTO users (uid, name, password, requiresPasswordReset)
+	                     VALUES (?, ?, ?, ?);`,
+		u.ID, u.Name, u.Password, u.RequiresPasswordReset,
+	)
+	return err
 }
 
 // PutUser updates a user in the store. The ID field must not be blank.
