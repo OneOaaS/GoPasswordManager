@@ -81,6 +81,8 @@ func main() {
 	apiMux.HandleFuncC(pat.Post("/user"), handlePostUser)
 	apiMux.HandleFuncC(pat.Patch("/user/:id"), handlePatchUser)
 	apiMux.HandleFuncC(pat.Delete("/user/:id"), handleDeleteUser)
+	apiMux.HandleFuncC(pat.Get("/publicKey"), handleGetKeys)
+	apiMux.HandleFuncC(pat.Get("/publicKey/:id"), handleGetKey)
 
 	mux.HandleFuncC(pat.Post("/login"), PostLogin)
 	mux.HandleC(pat.New("/api/*"), apiMux)
