@@ -75,14 +75,23 @@ func main() {
 
 	apiMux.UseC(Auth)
 
+	// user-related endpoints
 	apiMux.HandleFuncC(pat.Get("/me"), handleGetMe)
 	apiMux.HandleFuncC(pat.Get("/user"), handleGetUser)
 	apiMux.HandleFuncC(pat.Get("/user/:id"), handleGetUser)
 	apiMux.HandleFuncC(pat.Post("/user"), handlePostUser)
 	apiMux.HandleFuncC(pat.Patch("/user/:id"), handlePatchUser)
 	apiMux.HandleFuncC(pat.Delete("/user/:id"), handleDeleteUser)
-	apiMux.HandleFuncC(pat.Get("/publicKey"), handleGetKeys)
-	apiMux.HandleFuncC(pat.Get("/publicKey/:id"), handleGetKey)
+
+	// public key-related endpoints
+	apiMux.HandleFuncC(pat.Get("/user/:userID/publicKey"), handleListUserPublicKey)
+	apiMux.HandleFuncC(pat.Get("/user/:userID/publicKey/:keyID"), handleGetUserPublicKey)
+	apiMux.HandleFuncC(pat.Post("/user/:userID/publicKey"), handlePostUserPublicKey)
+	apiMux.HandleFuncC(pat.Delete("/user/:userID/publicKey/:keyID"), handleDeleteUserPublicKey)
+
+	// external public key-related endpoints
+	apiMux.HandleFuncC(pat.Get("/publicKey"), handleGetPublicKeys)
+	apiMux.HandleFuncC(pat.Get("/publicKey/:id"), handleGetPublicKey)
 
 	mux.HandleFuncC(pat.Post("/login"), PostLogin)
 	mux.HandleC(pat.New("/api/*"), apiMux)
