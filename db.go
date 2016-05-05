@@ -63,8 +63,20 @@ func (s DBStore) PostUser(u User) error {
 }
 
 // PutUser updates a user in the store. The ID field must not be blank.
-func (s DBStore) PutUser(User) error {
-	return ErrNotImplemented
+func (s DBStore) PutUser(u User) error {
+	if u.ID == "" {
+		return errors.New("missing id")
+	} else if len(u.Password) == 0 {
+		return errors.New("missing password")
+	}
+	_, err := s.DB.Exec(`UPDATE users SET
+	                       name = ?,
+	                       password = ?,
+	                       requiresPasswordReset = ?
+	                     WHERE uid = ?;`,
+		u.Name, u.Password, u.RequiresPasswordReset, u.ID,
+	)
+	return err
 }
 
 // DeleteUser removes the user from the store with the given id.
