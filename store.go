@@ -1,6 +1,11 @@
 package main
 
-import "golang.org/x/net/context"
+import (
+	"path"
+	"path/filepath"
+
+	"golang.org/x/net/context"
+)
 
 // UserMeta represents short metadata about a user.
 type UserMeta struct {
@@ -91,4 +96,104 @@ type Store interface {
 
 func GetUser(ctx context.Context, userID string) (User, error) {
 	return StoreFromContext(ctx).GetUser(userID)
+}
+
+type PassDirent struct {
+	File bool
+	Name string
+}
+
+// PassTx represents a read-only transaction on a PassStore.
+type PassTx interface {
+	// Type determines the whether path exists and if it's a file or directory.
+	Type(path string) (exists bool, file bool)
+
+	// List lists files in a directory. The Name of each PassDirent is the
+	// basename of each file, not its full path. List will not be affect by Put
+	// and Delete.
+	List(path string) ([]PassDirent, error)
+
+	// Get gets a specific file. It is an error to call Get on a path that has
+	// been previously written to in the same transaction.
+	Get(path string) ([]byte, error)
+
+	// Recipients gets the list of recipients (key IDs) path (and possibly
+	// subdirectories) should be encrypted to.
+	Recipients(path string) ([]string, error)
+
+	// GetAffectedFiles get a list of files that will be affected by a change
+	// of recipients at path. These are the files that need to be reencrpted
+	// and passed to SetRecipients.
+	GetAffectedFiles(path string) ([]string, error)
+}
+
+// PassTxW represents a write transaction on a PassStore. No explicit actions
+// are required to roll back an uncommitted transaction.
+type PassTxW interface {
+	// A writeable transaction is not required to include writes in future
+	// reads: writing or deleting a file and then reading it later will likely
+	// produce unexpected results.
+	PassTx
+
+	// Put puts a specific file. path must end with .gpg, and all parent
+	// directories must not end with .gpg.
+	Put(path string, contents []byte)
+
+	// Delete removes a specific file (or directory).
+	Delete(path string)
+
+	// SetRecipients sets the list of recipients (key IDs) on path, which must
+	// be a directory. In order for the transaction to succeed, all affected
+	// files must be re-saved using Put or deleted with Delete.
+	SetRecipients(path string, recipients []string)
+
+	// Commit writes the changes to the repository to disk.
+	Commit(message string) error
+}
+
+type PassStore interface {
+	Begin() (PassTx, error)
+	BeginW() (PassTxW, error)
+}
+
+type PassWalker interface {
+	Walk(root string, fn PassWalkFn) error
+}
+
+// PassStoreWalkFn is the function called by PassStore; the Name field of p is
+// the full path of the file.
+// Returning filepath.SkipDir will skip a directory. Any other errors are
+// immediately passed back to the caller of Walk.
+type PassWalkFn func(p PassDirent) error
+
+func PassWalk(ps PassTx, root string, fn PassWalkFn) error {
+	if walker, ok := ps.(PassWalker); ok {
+		return walker.Walk(root, fn)
+	} else {
+		q := []PassDirent{{
+			Name: "/",
+			File: false,
+		}}
+		var d PassDirent
+		for len(q) > 0 {
+			d, q = q[0], q[1:]
+			if err := fn(d); err == filepath.SkipDir {
+				continue
+			} else if err != nil {
+				return err
+			}
+			if !d.File {
+				// this is a directory, recurse
+				if l, err := ps.List(d.Name); err != nil {
+					return err
+				} else {
+					for _, f := range l {
+						f.Name = path.Join(d.Name, f.Name)
+						q = append(q, f)
+					}
+				}
+			}
+		}
+		return nil
+	}
 }

@@ -38,6 +38,8 @@ func main() {
 	}
 	config.DB.DSN = "db.db"
 	config.DB.Driver = "sqlite3"
+	config.Git.Root = "password-store.git"
+	config.Git.Branch = "master"
 
 	sc := securecookie.New(config.CookieSecret, nil)
 	sc.SetSerializer(securecookie.JSONEncoder{})
@@ -49,6 +51,11 @@ func main() {
 	} else {
 		addDefaults(db)
 		rootCtx = ContextWithStore(rootCtx, db)
+	}
+	if ps, err := NewGitPass("password-store.git", "master", config.Dev); err != nil {
+		log.Fatal("Could not open git repo: ", err)
+	} else {
+		rootCtx = ContextWithPass(rootCtx, ps)
 	}
 	rootCtx = ContextWithSecureCookie(rootCtx, sc)
 	rootCtx = ContextWithRender(rootCtx, render.New(render.Options{

@@ -19,6 +19,7 @@ const (
 	ctxSessionKey
 	ctxSecureCookieKey
 	ctxRenderKey
+	ctxPassKey
 )
 
 func rlog(ctx context.Context, args ...interface{}) {
@@ -70,4 +71,11 @@ func RenderFromContext(ctx context.Context) *render.Render {
 }
 func ContextWithRender(parent context.Context, s *render.Render) context.Context {
 	return context.WithValue(parent, ctxRenderKey, s)
+}
+
+func PassFromContext(ctx context.Context) PassStore {
+	return ctx.Value(ctxPassKey).(PassStore)
+}
+func ContextWithPass(parent context.Context, ps PassStore) context.Context {
+	return context.WithValue(parent, ctxPassKey, ps)
 }
