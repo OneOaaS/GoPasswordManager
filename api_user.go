@@ -25,13 +25,23 @@ GET /api/user/:id - get a user or the list of users
 */
 func handleGetUser(ctx context.Context, rw http.ResponseWriter, r *http.Request) {
 	idi := ctx.Value(pattern.Variable("id"))
+	store := StoreFromContext(ctx)
 	if id, _ := idi.(string); id != "" {
-		if u, err := StoreFromContext(ctx).GetUser(id); err != nil {
+		if u, err := store.GetUser(id); err != nil {
 			http.Error(rw, "not found", http.StatusNotFound)
+			return
+		} else if u.PublicKeys, err = store.GetPublicKeys(u.ID); err != nil {
+			rlog(ctx, "Could not get list of public keys: ", err)
+			http.Error(rw, "internal server error", http.StatusInternalServerError)
 			return
 		} else {
 			var v interface{} = u.UserFull
 			if id == UserFromContext(ctx).ID {
+				if u.PrivateKeys, err = store.GetPrivateKeys(u.ID); err != nil {
+					rlog(ctx, "Could not get list of private keys: ", err)
+					http.Error(rw, "internal server error", http.StatusInternalServerError)
+					return
+				}
 				v = u
 			}
 			if err := RenderFromContext(ctx).JSON(rw, http.StatusOK, v); err != nil {
@@ -39,7 +49,7 @@ func handleGetUser(ctx context.Context, rw http.ResponseWriter, r *http.Request)
 			}
 		}
 	} else { // if id == ""
-		if us, err := StoreFromContext(ctx).ListUsers(); err != nil {
+		if us, err := store.ListUsers(); err != nil {
 			rlog(ctx, "Could not list users: ", err)
 			http.Error(rw, "internal server error", http.StatusInternalServerError)
 			return
