@@ -10,10 +10,10 @@ import (
 // UserMeta represents short metadata about a user.
 type UserMeta struct {
 	// ID is the user's ID (what users use to log in)
-	ID string `json:"id"`
+	ID string `json:"id" db:"id"`
 
 	// Name is the user's full name.
-	Name string `json:"name"`
+	Name string `json:"name" db:"name"`
 }
 
 // UserFull contains all public information about a user.
@@ -29,11 +29,11 @@ type User struct {
 	UserFull
 
 	// Password is the hash (bcrypt) of the user's authentication password.
-	Password []byte `json:"-"`
+	Password []byte `json:"-" db:"password"`
 
 	// RequiresPasswordReset is true if the password needs to be reset by the
 	// user.
-	RequiresPasswordReset bool `json:"requiresPasswordReset"`
+	RequiresPasswordReset bool `json:"requiresPasswordReset" db:"requiresPasswordReset"`
 
 	// PrivateKeys is the list of private keys owned by the user
 	PrivateKeys []string

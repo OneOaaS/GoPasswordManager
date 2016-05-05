@@ -9,6 +9,7 @@ import (
 	"github.com/elithrar/goji-logger"
 	"github.com/goji/ctx-csrf"
 	"github.com/gorilla/securecookie"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/unrolled/render"
 
 	"goji.io"
@@ -35,6 +36,8 @@ func main() {
 		CookieName:   "pass",
 		Dev:          true,
 	}
+	config.DB.DSN = "db.db"
+	config.DB.Driver = "sqlite3"
 
 	us := StaticUserStore{}
 	us.AddUser("tolar2", "Jeffrey Tolar", "tolar2")
@@ -44,7 +47,11 @@ func main() {
 
 	rootCtx := context.Background()
 	rootCtx = ContextWithConfig(rootCtx, config)
-	rootCtx = ContextWithUserStore(rootCtx, us)
+	if db, err := initDB(config.DB.Driver, config.DB.DSN); err != nil {
+		log.Fatal("Could not open database: ", err)
+	} else {
+		rootCtx = ContextWithUserStore(rootCtx, db)
+	}
 	rootCtx = ContextWithSecureCookie(rootCtx, sc)
 	rootCtx = ContextWithRender(rootCtx, render.New(render.Options{
 		IsDevelopment: config.Dev,
