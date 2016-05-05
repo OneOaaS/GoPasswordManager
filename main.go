@@ -39,9 +39,6 @@ func main() {
 	config.DB.DSN = "db.db"
 	config.DB.Driver = "sqlite3"
 
-	us := StaticUserStore{}
-	us.AddUser("tolar2", "Jeffrey Tolar", "tolar2")
-
 	sc := securecookie.New(config.CookieSecret, nil)
 	sc.SetSerializer(securecookie.JSONEncoder{})
 

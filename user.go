@@ -1,11 +1,6 @@
 package main
 
-import (
-	"errors"
-
-	"golang.org/x/crypto/bcrypt"
-	"golang.org/x/net/context"
-)
+import "golang.org/x/net/context"
 
 // UserMeta represents short metadata about a user.
 type UserMeta struct {
@@ -66,46 +61,4 @@ type UserStore interface {
 
 func GetUser(ctx context.Context, userID string) (User, error) {
 	return UserStoreFromContext(ctx).GetUser(userID)
-}
-
-// A StaticUserStore stores a list of predefined (static) users.
-type StaticUserStore map[string]User
-
-func (s StaticUserStore) GetUser(id string) (User, error) {
-	if u, ok := s[id]; ok {
-		return u, nil
-	}
-	return User{}, errors.New("invalid user")
-}
-
-func (s StaticUserStore) AddUser(id, name, password string) {
-	pass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		panic(err)
-	}
-	var u User
-	u.ID = id
-	u.Name = name
-	u.Password = pass
-	s[id] = u
-}
-
-func (s StaticUserStore) ListUsers() ([]UserMeta, error) {
-	l := make([]UserMeta, 0, len(s))
-	for _, u := range s {
-		l = append(l, u.UserMeta)
-	}
-	return l, nil
-}
-func (s StaticUserStore) PostUser(User) error            { return errors.New("not implemented") }
-func (s StaticUserStore) PutUser(User) error             { return errors.New("not implemented") }
-func (s StaticUserStore) DeleteUser(userID string) error { return errors.New("not implemented") }
-
-func (s StaticUserStore) GetPublicKeys(userID string) ([]string, error) { return nil, nil }
-func (s StaticUserStore) AddPublicKey(userID, keyID string) error {
-	return errors.New("not implemented")
-}
-func (s StaticUserStore) GetPrivateKeys(userID string) ([]string, error) { return nil, nil }
-func (s StaticUserStore) AddPrivateKey(userID, keyID string) error {
-	return errors.New("not implemented")
 }
