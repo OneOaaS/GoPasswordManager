@@ -81,6 +81,8 @@ func Auth(next goji.Handler) goji.Handler {
 			return
 		}
 
+		rlogf(ctx, "Authenticated as %q", s.UserID)
+
 		ctx = ContextWithSession(ctx, s)
 		ctx = ContextWithUser(ctx, u)
 
