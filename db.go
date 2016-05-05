@@ -54,9 +54,9 @@ type DBStore struct {
 }
 
 type dbKey struct {
-	KeyID      string `db:"kid"`
-	UserID     string `db:"uid"`
-	ArmoredKey []byte `db:"armored"`
+	KeyID      string         `db:"kid"`
+	UserID     sql.NullString `db:"uid"` // only can be NULL for public keys
+	ArmoredKey []byte         `db:"armored"`
 }
 
 func (s DBStore) GetUser(userID string) (User, error) {
@@ -147,18 +147,27 @@ func (s DBStore) AddPublicKey(userID, keyID string, armoredKey []byte) error {
 	if err != nil {
 		return err
 	}
-	var existsID string
-	if err := tx.Get(&existsID, `SELECT kid FROM public_keys WHERE kid = ?;`, keyID); err != nil && err != sql.ErrNoRows {
+	var key dbKey
+	if err := tx.Get(&key, `SELECT kid, uid FROM public_keys WHERE kid = ?;`, keyID); err != nil && err != sql.ErrNoRows {
 		tx.Rollback()
 		return err
-	} else if err != sql.ErrNoRows {
+	} else if err != sql.ErrNoRows && key.UserID.Valid {
+		// we got a row, and it already has a user ID
 		tx.Rollback()
 		return ErrKeyAlreadyExists
 	}
 
-	if _, err := tx.Exec(`INSERT INTO public_keys (kid, uid, armored) VALUES (?, ?, ?);`, keyID, userID, armoredKey); err != nil {
-		tx.Rollback()
-		return err
+	if key.UserID.Valid {
+		// allow adopting external keys
+		if _, err := tx.Exec(`UPDATE public_keys SET uid = ?, armored = ? WHERE kid = ? AND uid == NULL;`, userID, armoredKey, keyID); err != nil {
+			tx.Rollback()
+			return err
+		}
+	} else {
+		if _, err := tx.Exec(`INSERT INTO public_keys (kid, uid, armored) VALUES (?, ?, ?);`, keyID, userID, armoredKey); err != nil {
+			tx.Rollback()
+			return err
+		}
 	}
 
 	return tx.Commit()
