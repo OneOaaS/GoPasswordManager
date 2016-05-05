@@ -1,12 +1,16 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
 
 	"github.com/jmoiron/sqlx"
 )
 
-var ErrMissingID = errors.New("missing id")
+var (
+	ErrMissingID        = errors.New("missing id")
+	ErrKeyAlreadyExists = errors.New("key already exists")
+)
 
 const initQuery = `
 CREATE TABLE IF NOT EXISTS users (
@@ -17,7 +21,21 @@ CREATE TABLE IF NOT EXISTS users (
 ); -- potentially WITHOUT ROWID
 
 INSERT OR IGNORE INTO users (uid, name, password, requiresPasswordReset) 
-VALUES ("tolar2", "Jeffrey Tolar", "$2a$08$NrDJh5azlzGCvCaXYDI.O.0KLhKci7gmRC2D0yeBFi5q3xKU7ZTIq", 0); -- password = "tolar2"
+VALUES ("tolar2", "Jeffrey Tolar", "$2a$08$NrDJh5azlzGCvCaXYDI.O.0KLhKci7gmRC2D0yeBFi5q3xKU7ZTIq", 0); -- password = "tolar2";
+
+
+CREATE TABLE IF NOT EXISTS public_keys (
+	kid TEXT PRIMARY KEY NOT NULL,
+	uid TEXT REFERENCES users(uid) ON DELETE SET DEFAULT, -- NULL if an external key
+	armored BLOB NOT NULL
+); -- potentially WITHOUT ROWID
+
+
+CREATE TABLE IF NOT EXISTS private_keys (
+	kid TEXT PRIMARY KEY NOT NULL,
+	uid TEXT NOT NULL REFERENCES users(uid) ON DELETE CASCADE,
+	armored BLOB NOT NULL
+); -- potentially WITHOUT ROWID
 `
 
 func initDB(driver, dsn string) (DBStore, error) {
@@ -34,6 +52,12 @@ func initDB(driver, dsn string) (DBStore, error) {
 
 type DBStore struct {
 	DB *sqlx.DB
+}
+
+type dbKey struct {
+	KeyID      string `db:"kid"`
+	UserID     string `db:"uid"`
+	ArmoredKey []byte `db:"armored"`
 }
 
 func (s DBStore) GetUser(userID string) (User, error) {
@@ -89,41 +113,153 @@ func (s DBStore) DeleteUser(userID string) error {
 }
 
 func (s DBStore) GetPublicKeys(userID string) (map[string][]byte, error) {
-	return nil, ErrNotImplemented
+	if userID == "" {
+		return nil, ErrMissingID
+	}
+
+	var keys []dbKey
+	if err := s.DB.Select(&keys, `SELECT kid, armored FROM public_keys WHERE uid = ?;`, userID); err != nil {
+		return nil, err
+	}
+
+	ret := make(map[string][]byte, len(keys))
+	for _, key := range keys {
+		ret[key.KeyID] = key.ArmoredKey
+	}
+	return ret, nil
 }
 
 func (s DBStore) GetPublicKeyIDs(userID string) ([]string, error) {
-	return nil, ErrNotImplemented
+	if userID == "" {
+		return nil, ErrMissingID
+	}
+
+	var keys []string
+	if err := s.DB.Select(&keys, `SELECT kid FROM public_keys WHERE uid = ?;`, userID); err != nil {
+		return nil, err
+	}
+
+	return keys, nil
 }
 
 func (s DBStore) AddPublicKey(userID, keyID string, armoredKey []byte) error {
-	return ErrNotImplemented
+	// use a transaction and check for existence so we can give better errors to the UI.
+	tx, err := s.DB.Beginx()
+	if err != nil {
+		return err
+	}
+	var existsID string
+	if err := tx.Get(&existsID, `SELECT kid FROM public_keys WHERE kid = ?;`, keyID); err != nil && err != sql.ErrNoRows {
+		tx.Rollback()
+		return err
+	} else if err != sql.ErrNoRows {
+		tx.Rollback()
+		return ErrKeyAlreadyExists
+	}
+
+	if _, err := tx.Exec(`INSERT INTO public_keys (kid, uid, armored) VALUES (?, ?, ?);`, keyID, userID, armoredKey); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func (s DBStore) RemovePublicKey(userID, keyID string) error {
-	return ErrNotImplemented
+	_, err := s.DB.Exec(`UPDATE public_keys
+	                     SET uid = NULL
+	                     WHERE kid = ? AND uid = ?;`,
+		keyID, userID,
+	)
+	return err
 }
 
 func (s DBStore) AddExternalPublicKey(keyID string, armoredKey []byte) error {
-	return ErrNotImplemented
+	// use a transaction and check for existence so we can give better errors to the UI.
+	tx, err := s.DB.Beginx()
+	if err != nil {
+		return err
+	}
+	var existsID string
+	if err := tx.Get(&existsID, `SELECT kid FROM public_keys WHERE kid = ?;`, keyID); err != nil && err != sql.ErrNoRows {
+		tx.Rollback()
+		return err
+	} else if err != sql.ErrNoRows {
+		tx.Rollback()
+		return ErrKeyAlreadyExists
+	}
+
+	if _, err := tx.Exec(`INSERT INTO public_keys (kid, armored) VALUES (?, ?);`, keyID, armoredKey); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func (s DBStore) GetUserForPublicKey(keyID string) (string, error) {
-	return "", ErrNotImplemented
+	var userID string
+	err := s.DB.Get(&userID, `SELECT uid FROM public_keys WHERE kid = ?;`, keyID)
+	return userID, err
 }
 
 func (s DBStore) GetPrivateKeys(userID string) (map[string][]byte, error) {
-	return nil, ErrNotImplemented
+	if userID == "" {
+		return nil, ErrMissingID
+	}
+
+	var keys []dbKey
+	if err := s.DB.Select(&keys, `SELECT kid, armored FROM private_keys WHERE uid = ?;`, userID); err != nil {
+		return nil, err
+	}
+
+	ret := make(map[string][]byte, len(keys))
+	for _, key := range keys {
+		ret[key.KeyID] = key.ArmoredKey
+	}
+	return ret, nil
 }
 
 func (s DBStore) GetPrivateKeyIDs(userID string) ([]string, error) {
-	return nil, ErrNotImplemented
+	if userID == "" {
+		return nil, ErrMissingID
+	}
+
+	var keys []string
+	if err := s.DB.Select(&keys, `SELECT kid FROM private_keys WHERE uid = ?;`, userID); err != nil {
+		return nil, err
+	}
+
+	return keys, nil
 }
 
 func (s DBStore) AddPrivateKey(userID, keyID string, armoredKey []byte) error {
-	return ErrNotImplemented
+	// use a transaction and check for existence so we can give better errors to the UI.
+	tx, err := s.DB.Beginx()
+	if err != nil {
+		return err
+	}
+	var existsID string
+	if err := tx.Get(&existsID, `SELECT kid FROM private_keys WHERE kid = ?;`, keyID); err != nil && err != sql.ErrNoRows {
+		tx.Rollback()
+		return err
+	} else if err != sql.ErrNoRows {
+		tx.Rollback()
+		return ErrKeyAlreadyExists
+	}
+
+	if _, err := tx.Exec(`INSERT INTO private_keys (kid, uid, armored) VALUES (?, ?, ?);`, keyID, userID, armoredKey); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func (s DBStore) RemovePrivateKey(userID, keyID string) error {
-	return ErrNotImplemented
+	_, err := s.DB.Exec(`DELETE FROM private_keys
+	                     WHERE kid = ? AND uid = ?;`,
+		keyID, userID,
+	)
+	return err
 }
