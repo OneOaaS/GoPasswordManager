@@ -16,7 +16,7 @@ type UserFull struct {
 	UserMeta
 
 	// PublicKeys is the list of public keys owned by the user
-	PublicKeys []string
+	PublicKeys []string `json:"publicKeys,omitempty"`
 }
 
 // User contains all public and private information about a user.
@@ -28,10 +28,10 @@ type User struct {
 
 	// RequiresPasswordReset is true if the password needs to be reset by the
 	// user.
-	RequiresPasswordReset bool `json:"requiresPasswordReset" db:"requiresPasswordReset"`
+	RequiresPasswordReset bool `json:"requiresPasswordReset,omitempty" db:"requiresPasswordReset"`
 
 	// PrivateKeys is the list of private keys owned by the user
-	PrivateKeys []string
+	PrivateKeys []string `json:"privateKeys,omitempty"`
 }
 
 // UserStore represents a place to store users.
