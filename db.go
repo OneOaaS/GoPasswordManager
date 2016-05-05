@@ -195,9 +195,9 @@ func (s DBStore) AddExternalPublicKey(keyID string, armoredKey []byte) error {
 }
 
 func (s DBStore) GetUserForPublicKey(keyID string) (string, error) {
-	var userID string
+	var userID sql.NullString
 	err := s.DB.Get(&userID, `SELECT uid FROM public_keys WHERE kid = ?;`, keyID)
-	return userID, err
+	return userID.String, err
 }
 
 func (s DBStore) GetPrivateKeys(userID string) (map[string][]byte, error) {
