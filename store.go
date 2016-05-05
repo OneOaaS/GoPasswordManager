@@ -37,8 +37,8 @@ type User struct {
 	PrivateKeys []string `json:"privateKeys,omitempty"`
 }
 
-// UserStore represents a place to store users.
-type UserStore interface {
+// Store represents a place to store users.
+type Store interface {
 	// GetUser retrieves the user from the store with the given id.
 	GetUser(userID string) (User, error)
 	// ListUsers retrieves metadata about all users in the store.
@@ -74,5 +74,5 @@ type UserStore interface {
 }
 
 func GetUser(ctx context.Context, userID string) (User, error) {
-	return UserStoreFromContext(ctx).GetUser(userID)
+	return StoreFromContext(ctx).GetUser(userID)
 }

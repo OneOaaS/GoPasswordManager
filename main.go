@@ -47,7 +47,7 @@ func main() {
 	if db, err := initDB(config.DB.Driver, config.DB.DSN); err != nil {
 		log.Fatal("Could not open database: ", err)
 	} else {
-		rootCtx = ContextWithUserStore(rootCtx, db)
+		rootCtx = ContextWithStore(rootCtx, db)
 	}
 	rootCtx = ContextWithSecureCookie(rootCtx, sc)
 	rootCtx = ContextWithRender(rootCtx, render.New(render.Options{

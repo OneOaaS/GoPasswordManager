@@ -26,7 +26,7 @@ GET /api/user/:id - get a user or the list of users
 func handleGetUser(ctx context.Context, rw http.ResponseWriter, r *http.Request) {
 	idi := ctx.Value(pattern.Variable("id"))
 	if id, _ := idi.(string); id != "" {
-		if u, err := UserStoreFromContext(ctx).GetUser(id); err != nil {
+		if u, err := StoreFromContext(ctx).GetUser(id); err != nil {
 			http.Error(rw, "not found", http.StatusNotFound)
 			return
 		} else {
@@ -39,7 +39,7 @@ func handleGetUser(ctx context.Context, rw http.ResponseWriter, r *http.Request)
 			}
 		}
 	} else { // if id == ""
-		if us, err := UserStoreFromContext(ctx).ListUsers(); err != nil {
+		if us, err := StoreFromContext(ctx).ListUsers(); err != nil {
 			rlog(ctx, "Could not list users: ", err)
 			http.Error(rw, "internal server error", http.StatusInternalServerError)
 			return
@@ -65,7 +65,7 @@ func handlePostUser(ctx context.Context, rw http.ResponseWriter, r *http.Request
 	}
 	var u User
 
-	us := UserStoreFromContext(ctx)
+	us := StoreFromContext(ctx)
 
 	if err := json.NewDecoder(r.Body).Decode(&ui); err != nil {
 		rlog(ctx, "Could not decode JSON: ", err)
@@ -113,7 +113,7 @@ func handlePatchUser(ctx context.Context, rw http.ResponseWriter, r *http.Reques
 		Password    *string `json:"password"`
 	}
 
-	us := UserStoreFromContext(ctx)
+	us := StoreFromContext(ctx)
 	u := UserFromContext(ctx)
 	rid := pat.Param(ctx, "id")
 
@@ -164,7 +164,7 @@ func handleDeleteUser(ctx context.Context, rw http.ResponseWriter, r *http.Reque
 		Password string `json:"password"`
 	}
 
-	us := UserStoreFromContext(ctx)
+	us := StoreFromContext(ctx)
 	u := UserFromContext(ctx)
 	rid := pat.Param(ctx, "id")
 

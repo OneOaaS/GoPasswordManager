@@ -15,7 +15,7 @@ type ctxKey int
 const (
 	ctxConfigKey ctxKey = iota
 	ctxUserKey
-	ctxUserStoreKey
+	ctxStoreKey
 	ctxSessionKey
 	ctxSecureCookieKey
 	ctxRenderKey
@@ -44,11 +44,11 @@ func ContextWithUser(parent context.Context, u User) context.Context {
 	return context.WithValue(parent, ctxUserKey, u)
 }
 
-func UserStoreFromContext(ctx context.Context) UserStore {
-	return ctx.Value(ctxUserStoreKey).(UserStore)
+func StoreFromContext(ctx context.Context) Store {
+	return ctx.Value(ctxStoreKey).(Store)
 }
-func ContextWithUserStore(parent context.Context, us UserStore) context.Context {
-	return context.WithValue(parent, ctxUserStoreKey, us)
+func ContextWithStore(parent context.Context, us Store) context.Context {
+	return context.WithValue(parent, ctxStoreKey, us)
 }
 
 func SessionFromContext(ctx context.Context) Session {
