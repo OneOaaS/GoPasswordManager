@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"path"
 
+	"goji.io/pat"
 	"goji.io/pattern"
 
 	"golang.org/x/crypto/bcrypt"
@@ -93,7 +94,6 @@ oldPassword is only needed if password is being set.
 */
 func handlePatchUser(ctx context.Context, rw http.ResponseWriter, r *http.Request) {
 	var ui struct {
-		ID          *string `json:"id"` // ignored
 		Name        *string `json:"name"`
 		OldPassword *string `json:"oldPassword"`
 		Password    *string `json:"password"`
@@ -101,13 +101,14 @@ func handlePatchUser(ctx context.Context, rw http.ResponseWriter, r *http.Reques
 
 	us := UserStoreFromContext(ctx)
 	u := UserFromContext(ctx)
+	rid := pat.Param(ctx, "id")
 
-	if err := json.NewDecoder(r.Body).Decode(&ui); err != nil {
+	if rid != u.ID {
+		http.Error(rw, "cannot modify user", http.StatusForbidden)
+		return
+	} else if err := json.NewDecoder(r.Body).Decode(&ui); err != nil {
 		rlog(ctx, "Could not decode JSON: ", err)
 		http.Error(rw, "invalid JSON", http.StatusBadRequest)
-		return
-	} else if ui.ID != nil && *ui.ID != u.ID {
-		http.Error(rw, "cannot modify user", http.StatusForbidden)
 		return
 	}
 
@@ -119,7 +120,7 @@ func handlePatchUser(ctx context.Context, rw http.ResponseWriter, r *http.Reques
 			http.Error(rw, "missing oldPassword", http.StatusBadRequest)
 			return
 		} else if err := bcrypt.CompareHashAndPassword(u.Password, []byte(*ui.OldPassword)); err != nil {
-			http.Error(rw, "invalid password", http.StatusBadRequest)
+			http.Error(rw, "invalid password", http.StatusForbidden)
 			return
 		} else if pass, err := bcrypt.GenerateFromPassword([]byte(*ui.Password), bcrypt.DefaultCost); err != nil {
 			rlog(ctx, "Could not hash password: ", err)
@@ -140,8 +141,36 @@ func handlePatchUser(ctx context.Context, rw http.ResponseWriter, r *http.Reques
 
 /*
 DELETE /api/user/:id - delete a user
-(no body)
+{
+	"passsword": "user's password",
+}
 */
 func handleDeleteUser(ctx context.Context, rw http.ResponseWriter, r *http.Request) {
-	notImplemented(ctx, rw, r)
+	var ui struct {
+		Password string `json:"password"`
+	}
+
+	us := UserStoreFromContext(ctx)
+	u := UserFromContext(ctx)
+	rid := pat.Param(ctx, "id")
+
+	if rid != u.ID {
+		http.Error(rw, "cannot delete user", http.StatusForbidden)
+		return
+	} else if err := json.NewDecoder(r.Body).Decode(&ui); err != nil {
+		rlog(ctx, "Could not decode JSON: ", err)
+		http.Error(rw, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	if err := bcrypt.CompareHashAndPassword(u.Password, []byte(ui.Password)); err != nil {
+		http.Error(rw, "invalid password", http.StatusForbidden)
+		return
+	}
+
+	if err := us.DeleteUser(u.ID); err != nil {
+		rlog(ctx, "Could not delete user: ", err)
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+		return
+	}
 }
