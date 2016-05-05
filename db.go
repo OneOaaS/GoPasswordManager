@@ -20,9 +20,6 @@ CREATE TABLE IF NOT EXISTS users (
 	requiresPasswordReset BOOL NOT NULL
 ); -- potentially WITHOUT ROWID
 
-INSERT OR IGNORE INTO users (uid, name, password, requiresPasswordReset) 
-VALUES ("tolar2", "Jeffrey Tolar", "$2a$08$NrDJh5azlzGCvCaXYDI.O.0KLhKci7gmRC2D0yeBFi5q3xKU7ZTIq", 0); -- password = "tolar2";
-
 
 CREATE TABLE IF NOT EXISTS public_keys (
 	kid TEXT PRIMARY KEY NOT NULL,

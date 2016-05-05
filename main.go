@@ -47,6 +47,15 @@ func main() {
 	if db, err := initDB(config.DB.Driver, config.DB.DSN); err != nil {
 		log.Fatal("Could not open database: ", err)
 	} else {
+		db.PostUser(User{
+			UserFull: UserFull{
+				UserMeta: UserMeta{
+					ID:   "tolar2",
+					Name: "Jeffrey Tolar",
+				},
+			},
+			Password: []byte(`$2a$08$NrDJh5azlzGCvCaXYDI.O.0KLhKci7gmRC2D0yeBFi5q3xKU7ZTIq`), // password = "tolar2";
+		})
 		rootCtx = ContextWithStore(rootCtx, db)
 	}
 	rootCtx = ContextWithSecureCookie(rootCtx, sc)
