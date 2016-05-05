@@ -13,6 +13,14 @@ import (
 )
 
 /*
+GET /api/me - get information about the logged-in user
+*/
+func handleGetMe(ctx context.Context, rw http.ResponseWriter, r *http.Request) {
+	u := UserFromContext(ctx)
+	http.Redirect(rw, r, path.Join("/api/user", u.ID), http.StatusTemporaryRedirect)
+}
+
+/*
 GET /api/user/:id - get a user or the list of users
 */
 func handleGetUser(ctx context.Context, rw http.ResponseWriter, r *http.Request) {

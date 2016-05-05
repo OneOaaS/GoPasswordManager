@@ -74,6 +74,7 @@ func main() {
 
 	apiMux.UseC(Auth)
 
+	apiMux.HandleFuncC(pat.Get("/me"), handleGetMe)
 	apiMux.HandleFuncC(pat.Get("/user"), handleGetUser)
 	apiMux.HandleFuncC(pat.Get("/user/:id"), handleGetUser)
 	apiMux.HandleFuncC(pat.Post("/user"), handlePostUser)
