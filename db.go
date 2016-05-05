@@ -3,8 +3,6 @@ package main
 import (
 	"errors"
 
-	"golang.org/x/crypto/openpgp/packet"
-
 	"github.com/jmoiron/sqlx"
 )
 
@@ -15,6 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
 	password BLOB,
 	requiresPasswordReset BOOL NOT NULL
 ); -- potentially WITHOUT ROWID
+
 INSERT OR IGNORE INTO users (uid, name, password, requiresPasswordReset) 
 VALUES ("tolar2", "Jeffrey Tolar", "$2a$08$NrDJh5azlzGCvCaXYDI.O.0KLhKci7gmRC2D0yeBFi5q3xKU7ZTIq", 0); -- password = "tolar2"
 `
@@ -87,7 +86,7 @@ func (s DBStore) DeleteUser(userID string) error {
 	return err
 }
 
-func (s DBStore) GetPublicKeys(userID string) ([]*packet.PublicKey, error) {
+func (s DBStore) GetPublicKeys(userID string) (map[string][]byte, error) {
 	return nil, ErrNotImplemented
 }
 
@@ -95,7 +94,7 @@ func (s DBStore) GetPublicKeyIDs(userID string) ([]string, error) {
 	return nil, ErrNotImplemented
 }
 
-func (s DBStore) AddPublicKey(userID string, key *packet.PublicKey) error {
+func (s DBStore) AddPublicKey(userID, keyID string, armoredKey []byte) error {
 	return ErrNotImplemented
 }
 
@@ -103,7 +102,7 @@ func (s DBStore) RemovePublicKey(userID, keyID string) error {
 	return ErrNotImplemented
 }
 
-func (s DBStore) AddExternalPublicKey(key *packet.PublicKey) error {
+func (s DBStore) AddExternalPublicKey(keyID string, armoredKey []byte) error {
 	return ErrNotImplemented
 }
 
@@ -111,7 +110,7 @@ func (s DBStore) GetUserForPublicKey(keyID string) (string, error) {
 	return "", ErrNotImplemented
 }
 
-func (s DBStore) GetPrivateKeys(userID string) ([]*packet.PrivateKey, error) {
+func (s DBStore) GetPrivateKeys(userID string) (map[string][]byte, error) {
 	return nil, ErrNotImplemented
 }
 
@@ -119,7 +118,7 @@ func (s DBStore) GetPrivateKeyIDs(userID string) ([]string, error) {
 	return nil, ErrNotImplemented
 }
 
-func (s DBStore) AddPrivateKey(userID string, key *packet.PrivateKey) error {
+func (s DBStore) AddPrivateKey(userID, keyID string, armoredKey []byte) error {
 	return ErrNotImplemented
 }
 

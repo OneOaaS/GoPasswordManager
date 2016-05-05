@@ -1,9 +1,6 @@
 package main
 
-import (
-	"golang.org/x/crypto/openpgp/packet"
-	"golang.org/x/net/context"
-)
+import "golang.org/x/net/context"
 
 // UserMeta represents short metadata about a user.
 type UserMeta struct {
@@ -18,8 +15,8 @@ type UserMeta struct {
 type UserFull struct {
 	UserMeta
 
-	// PublicKeys is the list of public keys owned by the user
-	PublicKeys []string `json:"publicKeys,omitempty"`
+	// PublicKeys are the public keys owned by the user.
+	PublicKeys map[string][]byte `json:"publicKeys,omitempty"`
 }
 
 // User contains all public and private information about a user.
@@ -33,8 +30,8 @@ type User struct {
 	// user.
 	RequiresPasswordReset bool `json:"requiresPasswordReset,omitempty" db:"requiresPasswordReset"`
 
-	// PrivateKeys is the list of private keys owned by the user
-	PrivateKeys []string `json:"privateKeys,omitempty"`
+	// PrivateKeys are the private keys owned by the user.
+	PrivateKeys map[string][]byte `json:"privateKeys,omitempty"`
 }
 
 // Store represents a place to store users.
@@ -52,31 +49,31 @@ type Store interface {
 	// DeleteUser removes the user from the store with the given id.
 	DeleteUser(userID string) error
 
-	// GetPublicKeys gets a list of public keys that belong to a user.
-	GetPublicKeys(userID string) ([]*packet.PublicKey, error)
+	// GetPublicKeys gets the public keys that belong to a user.
+	GetPublicKeys(userID string) (map[string][]byte, error)
 	// GetPublicKeyIDs gets a list of public key IDs that belong to the user.
 	GetPublicKeyIDs(userID string) ([]string, error)
 	// AddPublicKey associates a key with a user.
-	AddPublicKey(userID string, keyID *packet.PublicKey) error
+	AddPublicKey(userID, keyID string, armoredKey []byte) error
 	// RemovePublicKey removes a key from a user. The key itself is not removed
 	// from the store, however.
 	RemovePublicKey(userID, keyID string) error
 
 	// AddExternalPublicKey adds the key to the store, but doesn't associate it
 	// with any user.
-	AddExternalPublicKey(key *packet.PublicKey) error
+	AddExternalPublicKey(keyID string, armoredKey []byte) error
 
 	// GetUserForPublicKey finds the user id owning the given key. If the key
 	// does not belong to any users, GetUserForPublicKey returns the empty
 	// string.
 	GetUserForPublicKey(keyID string) (string, error)
 
-	// GetPrivateKeys gets a list of private keys that belong to the user.
-	GetPrivateKeys(userID string) ([]*packet.PrivateKey, error)
+	// GetPrivateKeys gets the private keys that belong to the user.
+	GetPrivateKeys(userID string) (map[string][]byte, error)
 	// GetPrivateKeyIDs gets a list of private key IDs that belong to the user.
 	GetPrivateKeyIDs(userID string) ([]string, error)
 	// AddPrivateKey associates a key with a user.
-	AddPrivateKey(userID string, key *packet.PrivateKey) error
+	AddPrivateKey(userID, keyID string, armoredKey []byte) error
 	// RemovePrivateKey removes a key from a user. The key itself should also
 	// be removed from the store.
 	RemovePrivateKey(userID, keyID string) error
