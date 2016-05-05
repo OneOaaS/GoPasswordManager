@@ -1,0 +1,53 @@
+#home-div{
+    background-image:
+            linear-gradient(
+                    rgba(0, 0, 0, 0.8),
+                    rgba(0, 0, 0, 0.8)
+            ), url("../data/background.png");
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+    background-size: cover;
+}
+
+#home-title{
+    color: white;
+    font-size: 6em;
+}
+
+.vertical-center {
+    min-height: 94%;  /* Fallback for browsers do NOT support vh unit */
+    min-height: 94vh; /* These two lines are counted as one :-)       */
+
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: center;
+}
+
+#home-login-button{
+    margin-right: 2em;
+}
+
+#home-title{
+    text-align: center;
+    padding-bottom: 1em;
+}
+
+#nav-logout:hover{
+    cursor: pointer;
+}
+
+.navbar{
+    margin: 0;
+}
+
+.center-table{
+    margin: 0 auto !important;
+    float: none !important;
+}
+
+#user-name{
+    text-align: center;
+}

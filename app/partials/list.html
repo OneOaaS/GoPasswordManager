@@ -1,0 +1,66 @@
+<section ng-controller="listController">
+    <button type="button" class="btn btn-primary btn-md" data-toggle="modal" data-target="#addDirModal">Add Directory</button>
+    <button type="button" class="btn btn-primary btn-md" data-toggle="modal" data-target="#addFileModal">Add File</button>
+    <!--LIST FOR DISPLAYING DIRECTORIES-->
+    <div ng-show="isDir">
+        <ul class="list-group">
+            <li class="list-group-item" ng-repeat="dir in dirs"><a ng-href="#/{{ dir.path }}">{{ dir.name }}</a></li>
+        </ul>
+    </div>
+    <div class="row" ng-show="isFile">
+        <h4>key</h4>
+        <div>{{ key }}</div>
+    </div>
+
+    <!--MODAL FOR ADDING DIRECTORY-->
+    <div class="modal fade" id="addDirModal" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h3>Add Directory</h3>
+                </div>
+                <div class="modal-body" id="dir-modal-body">
+                    <form name="fileForm">
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" class="form-control" name="dirname" ng-model="dirForm.name" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" ng-click="addDir()">Add</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--MODAL FOR ADDING FILE-->
+    <div class="modal fade" id="addFileModal" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h3>Add File</h3>
+                </div>
+                <div class="modal-body" id="file-modal-body">
+                    <form name="fileForm">
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" class="form-control" name="filename" ng-model="fileForm.name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" class="form-control" name="filepassword" ng-model="fileForm.password" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" ng-click="addFile()">Add</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
