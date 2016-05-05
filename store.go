@@ -62,6 +62,15 @@ type Store interface {
 	// from the store, however.
 	RemovePublicKey(userID, keyID string) error
 
+	// AddExternalPublicKey adds the key to the store, but doesn't associate it
+	// with any user.
+	AddExternalPublicKey(key *packet.PublicKey) error
+
+	// GetUserForPublicKey finds the user id owning the given key. If the key
+	// does not belong to any users, GetUserForPublicKey returns the empty
+	// string.
+	GetUserForPublicKey(keyID string) (string, error)
+
 	// GetPrivateKeys gets a list of private keys that belong to the user.
 	GetPrivateKeys(userID string) ([]*packet.PrivateKey, error)
 	// GetPrivateKeyIDs gets a list of private key IDs that belong to the user.

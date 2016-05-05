@@ -103,6 +103,14 @@ func (s DBStore) RemovePublicKey(userID, keyID string) error {
 	return ErrNotImplemented
 }
 
+func (s DBStore) AddExternalPublicKey(key *packet.PublicKey) error {
+	return ErrNotImplemented
+}
+
+func (s DBStore) GetUserForPublicKey(keyID string) (string, error) {
+	return "", ErrNotImplemented
+}
+
 func (s DBStore) GetPrivateKeys(userID string) ([]*packet.PrivateKey, error) {
 	return nil, ErrNotImplemented
 }
