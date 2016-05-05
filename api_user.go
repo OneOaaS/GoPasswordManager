@@ -29,8 +29,14 @@ func handleGetUser(ctx context.Context, rw http.ResponseWriter, r *http.Request)
 		if u, err := UserStoreFromContext(ctx).GetUser(id); err != nil {
 			http.Error(rw, "not found", http.StatusNotFound)
 			return
-		} else if err := RenderFromContext(ctx).JSON(rw, http.StatusOK, u); err != nil {
-			rlog(ctx, "Could not render JSON: ", err)
+		} else {
+			var v interface{} = u.UserFull
+			if id == UserFromContext(ctx).ID {
+				v = u
+			}
+			if err := RenderFromContext(ctx).JSON(rw, http.StatusOK, v); err != nil {
+				rlog(ctx, "Could not render JSON: ", err)
+			}
 		}
 	} else { // if id == ""
 		if us, err := UserStoreFromContext(ctx).ListUsers(); err != nil {
