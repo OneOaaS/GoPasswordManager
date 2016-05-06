@@ -24,8 +24,6 @@ type GitPass struct {
 	repoRoot string
 	branch   string
 	debug    bool
-
-	repo *gogit.Repository
 }
 
 type GitError struct {
@@ -98,15 +96,6 @@ func NewGitPass(root, branch string, debug bool) (*GitPass, error) {
 		}
 	}
 
-	// we should now have a git repo
-	if repo, err := gogit.OpenRepository(root); err != nil {
-		return nil, err
-	} else if _, err := repo.LookupReference("refs/heads/" + g.branch); err != nil {
-		return nil, err
-	} else {
-		g.repo = repo
-	}
-
 	return g, nil
 }
 
@@ -131,13 +120,20 @@ type gitPassTxW struct {
 func (g *GitPass) Begin() (PassTx, error) {
 	tx := &gitPassTx{
 		g:      g,
-		repo:   g.repo,
 		branch: g.branch,
 	}
 
-	if ref, err := g.repo.LookupReference("refs/heads/" + g.branch); err != nil {
+	if repo, err := gogit.OpenRepository(g.repoRoot); err != nil {
 		return nil, err
-	} else if c, err := g.repo.LookupCommit(ref.Oid); err != nil {
+	} else if _, err := repo.LookupReference("refs/heads/" + g.branch); err != nil {
+		return nil, err
+	} else {
+		tx.repo = repo
+	}
+
+	if ref, err := tx.repo.LookupReference("refs/heads/" + g.branch); err != nil {
+		return nil, err
+	} else if c, err := tx.repo.LookupCommit(ref.Oid); err != nil {
 		return nil, err
 	} else {
 		tx.commit = c
