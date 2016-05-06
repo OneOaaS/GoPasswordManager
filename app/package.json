@@ -6,6 +6,7 @@
     "angular-loader": "^1.5.5",
     "angular-mocks": "^1.5.5",
     "angular-moment": "^1.0.0-beta.5",
+    "angular-resource": "^1.5.5",
     "angular-route": "^1.5.5",
     "body-parser": "^1.15.0",
     "bootstrap": "^3.3.6",
