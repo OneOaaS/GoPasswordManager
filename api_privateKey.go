@@ -110,7 +110,7 @@ PUT /api/user/:userID/privateKey/:keyID - update a private key
 <body should be an armored GPG key>
 */
 func handlePutUserPrivateKey(ctx context.Context, rw http.ResponseWriter, r *http.Request) {
-	userID := pat.Param(ctx, "userID")
+	userID, rKeyID := pat.Param(ctx, "userID"), pat.Param(ctx, "keyID")
 	if userID != UserFromContext(ctx).ID {
 		http.Error(rw, "cannot update other user's key", http.StatusForbidden)
 		return
@@ -130,7 +130,9 @@ func handlePutUserPrivateKey(ctx context.Context, rw http.ResponseWriter, r *htt
 	} else if el[0].PrivateKey == nil {
 		http.Error(rw, "missing private key", http.StatusBadRequest)
 		return
-	} else if keyID := el[0].PrivateKey.KeyIdString(); false {
+	} else if keyID := el[0].PrivateKey.KeyIdString(); keyID != rKeyID {
+		http.Error(rw, "mismatching keys", http.StatusBadRequest)
+		return
 	} else if err := StoreFromContext(ctx).PutPrivateKey(userID, keyID, b); err == ErrUnknownKey {
 		http.Error(rw, "not found", http.StatusNotFound)
 		return
