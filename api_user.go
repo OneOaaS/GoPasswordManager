@@ -30,17 +30,33 @@ func handleGetUser(ctx context.Context, rw http.ResponseWriter, r *http.Request)
 		if u, err := store.GetUser(id); err != nil {
 			http.Error(rw, "not found", http.StatusNotFound)
 			return
-		} else if u.PublicKeys, err = store.GetPublicKeys(u.ID); err != nil {
+		} else if publicKeys, err := store.GetPublicKeys(u.ID); err != nil {
 			rlog(ctx, "Could not get list of public keys: ", err)
 			http.Error(rw, "internal server error", http.StatusInternalServerError)
 			return
 		} else {
+			u.PublicKeys = make([]keyResponse, 0, len(publicKeys))
+			for kid, pk := range publicKeys {
+				u.PublicKeys = append(u.PublicKeys, keyResponse{
+					UserID:  u.ID,
+					KeyID:   kid,
+					Armored: pk,
+				})
+			}
 			var v interface{} = u.UserFull
 			if id == UserFromContext(ctx).ID {
-				if u.PrivateKeys, err = store.GetPrivateKeys(u.ID); err != nil {
+				if privateKeys, err := store.GetPrivateKeys(u.ID); err != nil {
 					rlog(ctx, "Could not get list of private keys: ", err)
 					http.Error(rw, "internal server error", http.StatusInternalServerError)
 					return
+				} else {
+					for kid, pk := range privateKeys {
+						u.PrivateKeys = append(u.PrivateKeys, keyResponse{
+							UserID:  u.ID,
+							KeyID:   kid,
+							Armored: pk,
+						})
+					}
 				}
 				v = u
 			}
