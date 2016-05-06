@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"net/http"
 	"path"
 	"strings"
@@ -118,18 +119,90 @@ func handleGetPass(ctx context.Context, rw http.ResponseWriter, r *http.Request)
 	}
 }
 
+/*
+POST /api/pass/* - save or create a password
+{
+	"contents": "full file contents, base64 encoded",
+	"message": "commit message"
+}
+*/
 func handlePostPass(ctx context.Context, rw http.ResponseWriter, r *http.Request) {
-	// p := pattern.Path(ctx)
-	// ps := PassFromContext(ctx)
-	// u := UserFromContext(ctx)
-	// tx := ps.Begin()
+	var req struct {
+		Contents []byte `json:"contents"`
+		Message  string `json:"message"`
+	}
+	p := pattern.Path(ctx)
+	ps := PassFromContext(ctx)
+	u := UserFromContext(ctx)
+	tx, err := ps.BeginW()
+	if err != nil {
+		rlog(ctx, "Could not start transaction: ", err)
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+		return
+	} else if exists, isFile := tx.Type(p); exists && !isFile {
+		http.Error(rw, "can't overwrite a directory", http.StatusBadRequest)
+		return
+	} else if uPubKeyIDs, err := StoreFromContext(ctx).GetPublicKeyIDs(u.ID); err != nil {
+		rlog(ctx, "Could not get public keys: ", err)
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+		return
+	} else if recipients, err := tx.Recipients(p); err != nil {
+		rlog(ctx, "Could not get recipients: ", err)
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+		return
+	} else if !containsAny(recipients, uPubKeyIDs) {
+		http.Error(rw, "forbidden", http.StatusForbidden)
+		return
+	} else if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(rw, "invalid JSON", http.StatusBadRequest)
+		return
+	} else {
+		tx.Put(p, req.Contents)
+		if err := tx.Commit(u.Name, req.Message); err != nil {
+			rlog(ctx, "Could not commit transaction: ", err)
+			http.Error(rw, "internal server error", http.StatusInternalServerError)
+			return
+		}
+	}
 }
 
+/*
+DELETE /api/pass/* - delete a password
+*/
 func handleDeletePass(ctx context.Context, rw http.ResponseWriter, r *http.Request) {
-	// p := pattern.Path(ctx)
-	// ps := PassFromContext(ctx)
-	// u := UserFromContext(ctx)
-	// tx := ps.Begin()
+	p := pattern.Path(ctx)
+	ps := PassFromContext(ctx)
+	u := UserFromContext(ctx)
+	tx, err := ps.BeginW()
+	if err != nil {
+		rlog(ctx, "Could not start transaction: ", err)
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+		return
+	} else if exists, isFile := tx.Type(p); !exists {
+		http.Error(rw, "not found", http.StatusNotFound)
+		return
+	} else if !isFile {
+		http.Error(rw, "can't delete a directory", http.StatusBadRequest)
+		return
+	} else if uPubKeyIDs, err := StoreFromContext(ctx).GetPublicKeyIDs(u.ID); err != nil {
+		rlog(ctx, "Could not get public keys: ", err)
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+		return
+	} else if recipients, err := tx.Recipients(p); err != nil {
+		rlog(ctx, "Could not get recipients: ", err)
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+		return
+	} else if !containsAny(recipients, uPubKeyIDs) {
+		http.Error(rw, "forbidden", http.StatusForbidden)
+		return
+	} else {
+		tx.Delete(p)
+		if err := tx.Commit(u.Name, "Removed "+p+" from store."); err != nil {
+			rlog(ctx, "Could not commit transaction: ", err)
+			http.Error(rw, "internal server error", http.StatusInternalServerError)
+			return
+		}
+	}
 }
 
 func handleGetPerm(ctx context.Context, rw http.ResponseWriter, r *http.Request) {

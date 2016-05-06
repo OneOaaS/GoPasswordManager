@@ -26,3 +26,17 @@ func getRecipients(r io.Reader) ([]string, error) {
 	}
 	return ret, nil
 }
+
+// containsAny returns true if any element of needles occurs in haystack; i.e.,
+// if intersection(haystack, needles) is non-empty.
+func containsAny(haystack []string, needles []string) bool {
+	// haystack and needles should be smallish... just use the simpler and O(1) memory but O(n*m) time algorithm
+	for _, h := range haystack {
+		for _, n := range needles {
+			if h == n {
+				return true
+			}
+		}
+	}
+	return false
+}
