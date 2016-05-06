@@ -16,7 +16,7 @@ func addDefaults(s Store) {
 }
 
 const (
-	tolar2PublicKeyID = `BA5B4C87EE10C1A547239B1C06DA75C70087DA08`
+	tolar2PublicKeyID = `06DA75C70087DA08`
 	tolar2PublicKey   = `
 -----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: GnuPG v2
@@ -50,7 +50,7 @@ bkUU3C23d7IhV5cR4nPXHebcps78y2conUliWcW36nc+
 -----END PGP PUBLIC KEY BLOCK-----
 `
 
-	tolar2PrivateKeyID = `BA5B4C87EE10C1A547239B1C06DA75C70087DA08`
+	tolar2PrivateKeyID = `06DA75C70087DA08`
 	tolar2PrivateKey   = `
 -----BEGIN PGP PRIVATE KEY BLOCK-----
 Version: GnuPG v2

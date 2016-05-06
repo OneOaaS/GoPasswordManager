@@ -10,6 +10,7 @@ import (
 var (
 	ErrMissingID        = errors.New("missing id")
 	ErrKeyAlreadyExists = errors.New("key already exists")
+	ErrUnknownKey       = errors.New("unknown key")
 )
 
 const initQuery = `
@@ -271,16 +272,21 @@ func (s DBStore) AddPrivateKey(userID, keyID string, armoredKey []byte) error {
 }
 
 func (s DBStore) PutPrivateKey(userID, keyID string, armoredKey []byte) error {
-	_, err := s.DB.Exec(`UPDATE private_keys SET armored = ? WHERE kid = ? AND uid = ?;`, armoredKey, keyID, userID)
-	return err
+	if r, err := s.DB.Exec(`UPDATE private_keys SET armored = ? WHERE kid = ? AND uid = ?;`, armoredKey, keyID, userID); err != nil {
+		return err
+	} else if count, err := r.RowsAffected(); err == nil && count == 0 {
+		return ErrUnknownKey
+	}
+	return nil
 }
 
 func (s DBStore) RemovePrivateKey(userID, keyID string) error {
-	_, err := s.DB.Exec(`DELETE FROM private_keys
-	                     WHERE kid = ? AND uid = ?;`,
-		keyID, userID,
-	)
-	return err
+	if r, err := s.DB.Exec(`DELETE FROM private_keys WHERE kid = ? AND uid = ?;`, keyID, userID); err != nil {
+		return err
+	} else if count, err := r.RowsAffected(); err == nil && count == 0 {
+		return ErrUnknownKey
+	}
+	return nil
 }
 
 func (s DBStore) GetPrivateKey(keyID string) (string, []byte, error) {

@@ -147,7 +147,7 @@ func handlePostUserPublicKey(ctx context.Context, rw http.ResponseWriter, r *htt
 	} else if el[0].PrimaryKey == nil {
 		http.Error(rw, "missing public (signing) key", http.StatusBadRequest)
 		return
-	} else if keyID := fmt.Sprintf("%X", el[0].PrimaryKey.Fingerprint); false {
+	} else if keyID := el[0].PrimaryKey.KeyIdString(); false {
 	} else if userID := UserFromContext(ctx).ID; false {
 	} else if err := StoreFromContext(ctx).AddPublicKey(userID, keyID, b); err == ErrKeyAlreadyExists {
 		http.Error(rw, "duplicate key", http.StatusConflict)

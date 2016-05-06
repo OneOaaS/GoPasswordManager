@@ -92,7 +92,7 @@ func handlePostUserPrivateKey(ctx context.Context, rw http.ResponseWriter, r *ht
 	} else if el[0].PrivateKey == nil {
 		http.Error(rw, "missing private key", http.StatusBadRequest)
 		return
-	} else if keyID := fmt.Sprintf("%X", el[0].PrivateKey.Fingerprint); false {
+	} else if keyID := el[0].PrivateKey.KeyIdString(); false {
 	} else if err := StoreFromContext(ctx).AddPrivateKey(userID, keyID, b); err == ErrKeyAlreadyExists {
 		http.Error(rw, "duplicate key", http.StatusConflict)
 		return
@@ -130,8 +130,12 @@ func handlePutUserPrivateKey(ctx context.Context, rw http.ResponseWriter, r *htt
 	} else if el[0].PrivateKey == nil {
 		http.Error(rw, "missing private key", http.StatusBadRequest)
 		return
-	} else if keyID := fmt.Sprintf("%X", el[0].PrivateKey.Fingerprint); false {
-	} else if err := StoreFromContext(ctx).PutPrivateKey(userID, keyID, b); err != nil {
+	} else if keyID := el[0].PrivateKey.KeyIdString(); false {
+	} else if err := StoreFromContext(ctx).PutPrivateKey(userID, keyID, b); err == ErrUnknownKey {
+		http.Error(rw, "not found", http.StatusNotFound)
+		return
+	} else if err != nil {
+		rlog(ctx, "Could not update private key: ", err)
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -145,7 +149,11 @@ func handleDeleteUserPrivateKey(ctx context.Context, rw http.ResponseWriter, r *
 	if userID != UserFromContext(ctx).ID {
 		http.Error(rw, "cannot delete other user's key", http.StatusForbidden)
 		return
-	} else if err := StoreFromContext(ctx).RemovePrivateKey(userID, keyID); err != nil {
+	} else if err := StoreFromContext(ctx).RemovePrivateKey(userID, keyID); err == ErrUnknownKey {
+		http.Error(rw, "not found", http.StatusNotFound)
+		return
+	} else if err != nil {
+		rlog(ctx, "Could not remove private key: ", err)
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 		return
 	}
