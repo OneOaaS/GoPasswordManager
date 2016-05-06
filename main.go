@@ -107,6 +107,14 @@ func main() {
 	apiMux.HandleFuncC(pat.Put("/user/:userID/privateKey/:keyID"), handlePutUserPrivateKey)
 	apiMux.HandleFuncC(pat.Delete("/user/:userID/privateKey/:keyID"), handleDeleteUserPrivateKey)
 
+	// password-related endpoints
+	apiMux.HandleFuncC(pat.Get("/pass/*"), handleGetPass)
+	apiMux.HandleFuncC(pat.Post("/pass/*"), handlePostPass) // always POST (even for edits)
+	apiMux.HandleFuncC(pat.Delete("/pass/*"), handleDeletePass)
+
+	apiMux.HandleFuncC(pat.Get("/passPerm/*"), handleGetPerm)
+	apiMux.HandleFuncC(pat.Post("/passPerm/*"), handlePostPerm) // always POST (even for edits)
+
 	mux.HandleFuncC(pat.Post("/login"), PostLogin)
 	mux.HandleC(pat.New("/api/*"), apiMux)
 
