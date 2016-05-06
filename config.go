@@ -8,4 +8,8 @@ type Config struct {
 		Driver string
 		DSN    string
 	}
+	Git struct {
+		Root   string
+		Branch string
+	}
 }

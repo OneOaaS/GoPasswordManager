@@ -38,6 +38,8 @@ func main() {
 	}
 	config.DB.DSN = "db.db"
 	config.DB.Driver = "sqlite3"
+	config.Git.Root = "password-store.git"
+	config.Git.Branch = "master"
 
 	sc := securecookie.New(config.CookieSecret, nil)
 	sc.SetSerializer(securecookie.JSONEncoder{})
@@ -47,7 +49,21 @@ func main() {
 	if db, err := initDB(config.DB.Driver, config.DB.DSN); err != nil {
 		log.Fatal("Could not open database: ", err)
 	} else {
+		addDefaults(db)
 		rootCtx = ContextWithStore(rootCtx, db)
+	}
+	if ps, err := NewGitPass("password-store.git", "master", config.Dev); err != nil {
+		log.Fatal("Could not open git repo: ", err)
+	} else {
+		if tx, err := ps.BeginW(); err != nil {
+			log.Fatal(err)
+		} else if rs, err := tx.Recipients("/"); err != nil || len(rs) == 0 {
+			tx.SetRecipients("/", []string{tolar2PublicKeyID})
+			if err := tx.Commit("admin", "Set initial recipients"); err != nil {
+				log.Fatal(err)
+			}
+		}
+		rootCtx = ContextWithPass(rootCtx, ps)
 	}
 	rootCtx = ContextWithSecureCookie(rootCtx, sc)
 	rootCtx = ContextWithRender(rootCtx, render.New(render.Options{
@@ -74,12 +90,38 @@ func main() {
 
 	apiMux.UseC(Auth)
 
+	// user-related endpoints
 	apiMux.HandleFuncC(pat.Get("/me"), handleGetMe)
 	apiMux.HandleFuncC(pat.Get("/user"), handleGetUser)
 	apiMux.HandleFuncC(pat.Get("/user/:id"), handleGetUser)
 	apiMux.HandleFuncC(pat.Post("/user"), handlePostUser)
 	apiMux.HandleFuncC(pat.Patch("/user/:id"), handlePatchUser)
 	apiMux.HandleFuncC(pat.Delete("/user/:id"), handleDeleteUser)
+
+	// public key-related endpoints
+	apiMux.HandleFuncC(pat.Get("/user/:userID/publicKey"), handleListUserPublicKey)
+	apiMux.HandleFuncC(pat.Get("/user/:userID/publicKey/:keyID"), handleGetUserPublicKey)
+	apiMux.HandleFuncC(pat.Post("/user/:userID/publicKey"), handlePostUserPublicKey)
+	apiMux.HandleFuncC(pat.Delete("/user/:userID/publicKey/:keyID"), handleDeleteUserPublicKey)
+
+	// external public key-related endpoints
+	apiMux.HandleFuncC(pat.Get("/publicKey"), handleGetPublicKeys)
+	apiMux.HandleFuncC(pat.Get("/publicKey/:id"), handleGetPublicKey)
+
+	// private key-related endpoints
+	apiMux.HandleFuncC(pat.Get("/user/:userID/privateKey"), handleListUserPrivateKey)
+	apiMux.HandleFuncC(pat.Get("/user/:userID/privateKey/:keyID"), handleGetUserPrivateKey)
+	apiMux.HandleFuncC(pat.Post("/user/:userID/privateKey"), handlePostUserPrivateKey)
+	apiMux.HandleFuncC(pat.Put("/user/:userID/privateKey/:keyID"), handlePutUserPrivateKey)
+	apiMux.HandleFuncC(pat.Delete("/user/:userID/privateKey/:keyID"), handleDeleteUserPrivateKey)
+
+	// password-related endpoints
+	apiMux.HandleFuncC(pat.Get("/pass/*"), handleGetPass)
+	apiMux.HandleFuncC(pat.Post("/pass/*"), handlePostPass) // always POST (even for edits)
+	apiMux.HandleFuncC(pat.Delete("/pass/*"), handleDeletePass)
+
+	apiMux.HandleFuncC(pat.Get("/passPerm/*"), handleGetPerm)
+	apiMux.HandleFuncC(pat.Post("/passPerm/*"), handlePostPerm) // always POST (even for edits)
 
 	mux.HandleFuncC(pat.Post("/login"), PostLogin)
 	mux.HandleC(pat.New("/api/*"), apiMux)
