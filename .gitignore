@@ -4,3 +4,4 @@ password-store.git
 db.db
 
 app/node_modules
+app/typings

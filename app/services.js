@@ -70,7 +70,7 @@ angular.module('myApp').factory('AuthService',
                 var deferred = $q.defer();
 
                 // send a get request to the server
-                $http.get('/user/logout')
+                $http.get('/logout')
                     // handle success
                     .success(function (data) {
                         user = false;
