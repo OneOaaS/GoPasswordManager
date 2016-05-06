@@ -41,23 +41,7 @@ myApp.controller('userController', ['$scope', '$http', 'AuthService', 'User',
         // });
 
         $scope.user = User.me();
-        $scope.user.$promise.then(function() {
-            var privK = $scope.user.privateKeys,
-                pubK = $scope.user.publicKeys;
-            $scope.user.privateKeys = Object.keys(privK).map(function(k) {
-                return {
-                    key: k,
-                    armor: privK[k]
-                };
-            });
-            $scope.user.publicKeys = Object.keys(pubK).map(function(k) {
-                return {
-                    key: k,
-                    armor: pubK[k]
-                };
-            });
-        })
-
+        
         $scope.addKey = function(){
             $scope.user.keys.push($scope.keyForm.key);
         }
