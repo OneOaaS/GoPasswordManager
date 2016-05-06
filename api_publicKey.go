@@ -84,13 +84,13 @@ func handleListUserPublicKey(ctx context.Context, rw http.ResponseWriter, r *htt
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 		return
 	} else {
-		ret := make(map[string]keyResponse, len(m))
+		ret := make([]keyResponse, 0, len(m))
 		for keyID, armored := range m {
-			ret[keyID] = keyResponse{
+			ret = append(ret, keyResponse{
 				KeyID:   keyID,
 				UserID:  userID,
 				Armored: armored,
-			}
+			})
 		}
 		if err := RenderFromContext(ctx).JSON(rw, http.StatusOK, ret); err != nil {
 			rlog(ctx, "Could not render JSON: ", err)
