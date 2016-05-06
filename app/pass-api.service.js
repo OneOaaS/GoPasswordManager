@@ -8,7 +8,8 @@
         .factory("User", ["$q", "$resource", "UserPublicKey", "UserPrivateKey", UserService])
         .factory("UserPublicKey", ["$resource", UserPublicKeyService])
         .factory("UserPrivateKey", ["$resource", UserPrivateKeyService])
-        .factory("PublicKey", ["$resource", PublicKey]);
+        .factory("PublicKey", ["$resource", PublicKeyService])
+        .factory("Pass", ["$resource", PassService]);
 
     function UserService($q, $resource, UserPublicKey, UserPrivateKey) {
         var User = $resource(apiLocation + "/user/:userId", null, {
@@ -60,8 +61,13 @@
         return UserPrivateKey;
     }
 
-    function PublicKey($resource) {
+    function PublicKeyService($resource) {
         var PublicKey = $resource(apiLocation + "/publicKey/:keyId");
         return PublicKey;
+    }
+    
+    function PassService($resource) {
+        var Pass = $resource(apiLocation + "/pass/:path");
+        return Pass;
     }
 })();
