@@ -1,0 +1,7 @@
+<div ui-tree-handle>
+    {{node.name}}
+</div>
+<ol ui-tree-nodes="" ng-model="node.children">
+    <li ng-repeat="node in node.children" ui-tree-node ng-include="'partials/pass_node.html'">
+    </li>
+</ol>

@@ -8,6 +8,14 @@
         </ul>
     </section>
 
+    <section id="password-listing">
+        <div ui-tree>
+            <ol ui-tree-nodes="" ng-model="passwords" id="tree-root">
+                <li ng-repeat="node in passwords" ui-tree-node ng-include="'partials/pass_node.html'"></li>
+            </ol>
+        </div>
+    </section>
+
     <!--MODAL FOR ADDING KEY-->
     <div class="modal fade" id="addKeyModal" role="dialog">
         <div class="modal-dialog modal-md" role="document">
