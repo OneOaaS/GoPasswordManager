@@ -3,8 +3,8 @@ angular.module('myApp').factory('AuthService',
         function ($q, $timeout, $http) {
 
             function isLoggedIn() {
-                console.log("isloggedin?");
-                console.log(user);
+                // console.log("isloggedin?");
+                // console.log(user);
                 if(user) {
                     return true;
                 } else {
