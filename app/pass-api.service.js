@@ -5,28 +5,44 @@
     var apiLocation = "http://localhost:8080/api";
 
     angular.module("myApp")
-        .factory("User", ["$resource", "UserPublicKey", "UserPrivateKey", UserService])
+        .factory("User", ["$q", "$resource", "UserPublicKey", "UserPrivateKey", UserService])
         .factory("UserPublicKey", ["$resource", UserPublicKeyService])
         .factory("UserPrivateKey", ["$resource", UserPrivateKeyService])
         .factory("PublicKey", ["$resource", PublicKey]);
 
-    function UserService($resource, UserPublicKey, UserPrivateKey) {
+    function UserService($q, $resource, UserPublicKey, UserPrivateKey) {
         var User = $resource(apiLocation + "/user/:userId", null, {
             'update': { method: 'PATCH' },
             'me': { method: 'GET', url: apiLocation + '/me' }
         });
         angular.extend(User.prototype, {
             getPublicKeys: function () {
-                return UserPublicKey.query({ userId: this.id });
+                var deferred = $q.defer();
+                this.$promise.then(function (user) {
+                    deferred.resolve(UserPublicKey.query({ userId: user.id }));
+                });
+                return deferred.promise;
             },
             getPublicKey: function (id) {
-                return UserPublicKey.get({ userId: this.id, keyId: id });
+                var deferred = $q.defer();
+                this.$promise.then(function (user) {
+                    deferred.resolve(UserPublicKey.query({ userId: user.id, keyId: id }));
+                });
+                return deferred.promise;
             },
             getPrivateKeys: function () {
-                return UserPrivateKey.query({ userId: this.id });
+                var deferred = $q.defer();
+                this.$promise.then(function (user) {
+                    deferred.resolve(UserPrivateKey.query({ userId: user.id }));
+                });
+                return deferred.promise;
             },
             getPrivateKey: function (id) {
-                return UserPrivateKey.get({ userId: this.id, keyId: id });
+                var deferred = $q.defer();
+                this.$promise.then(function (user) {
+                    deferred.resolve(UserPrivateKey.query({ userId: user.id, keyId: id }));
+                });
+                return deferred.promise;
             }
         });
         return User;
