@@ -55,6 +55,14 @@ func main() {
 	if ps, err := NewGitPass("password-store.git", "master", config.Dev); err != nil {
 		log.Fatal("Could not open git repo: ", err)
 	} else {
+		if tx, err := ps.BeginW(); err != nil {
+			log.Fatal(err)
+		} else if rs, err := tx.Recipients("/"); err != nil || len(rs) == 0 {
+			tx.SetRecipients("/", []string{tolar2PublicKeyID})
+			if err := tx.Commit("admin", "Set initial recipients"); err != nil {
+				log.Fatal(err)
+			}
+		}
 		rootCtx = ContextWithPass(rootCtx, ps)
 	}
 	rootCtx = ContextWithSecureCookie(rootCtx, sc)
