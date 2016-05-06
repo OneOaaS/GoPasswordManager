@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	recipientFile = ".gpg-id"
+	recipientFile   = ".gpg-id"
+	gitVerboseDeubg = false
 )
 
 type GitPass struct {
@@ -167,6 +168,10 @@ func (tx *gitPassTx) clean(p string) string {
 }
 
 func (tx *gitPassTx) getFile(p string) (*gogit.TreeEntry, error) {
+	if gitVerboseDeubg && tx.g.debug {
+		log.Printf("getFile(%q)", p)
+		defer log.Printf("getFile(%q) done", p)
+	}
 	if p == "" {
 		return &gogit.TreeEntry{
 			Type:     gogit.ObjectTree,
@@ -192,6 +197,11 @@ func (tx *gitPassTx) getFile(p string) (*gogit.TreeEntry, error) {
 }
 
 func (tx *gitPassTx) Type(p string) (exists bool, file bool) {
+	if gitVerboseDeubg && tx.g.debug {
+		log.Printf("Type(%q)", p)
+		defer log.Printf("Type(%q) done", p)
+	}
+
 	p = tx.clean(p)
 
 	if te, err := tx.getFile(p); err != nil {
@@ -202,6 +212,11 @@ func (tx *gitPassTx) Type(p string) (exists bool, file bool) {
 }
 
 func (tx *gitPassTx) List(p string) ([]PassDirent, error) {
+	if gitVerboseDeubg && tx.g.debug {
+		log.Printf("List(%q)", p)
+		defer log.Printf("List(%q) done", p)
+	}
+
 	p = tx.clean(p)
 
 	if te, err := tx.getFile(p); err != nil {
@@ -227,6 +242,11 @@ func (tx *gitPassTx) List(p string) ([]PassDirent, error) {
 }
 
 func (tx *gitPassTx) get(p string) ([]byte, error) {
+	if gitVerboseDeubg && tx.g.debug {
+		log.Printf("get(%q)", p)
+		defer log.Printf("get(%q) done", p)
+	}
+
 	if te, err := tx.getFile(p); err != nil {
 		return nil, err
 	} else if te.Type != gogit.ObjectBlob {
@@ -239,11 +259,21 @@ func (tx *gitPassTx) get(p string) ([]byte, error) {
 }
 
 func (tx *gitPassTx) Get(p string) ([]byte, error) {
+	if gitVerboseDeubg && tx.g.debug {
+		log.Printf("Get(%q)", p)
+		defer log.Printf("Get(%q) done", p)
+	}
+
 	p = tx.clean(p)
 	return tx.get(p)
 }
 
 func (tx *gitPassTx) recipients(p string, override map[string][]string) ([]string, error) {
+	if gitVerboseDeubg && tx.g.debug {
+		log.Printf("recipients(%q)", p)
+		defer log.Printf("recipients(%q) done", p)
+	}
+
 	// TODO: make this faster (each getFile starts from the root...)
 	r := path.Join(p, recipientFile)
 	if s := override[r]; len(s) > 0 {
@@ -252,6 +282,7 @@ func (tx *gitPassTx) recipients(p string, override map[string][]string) ([]strin
 		return strings.Split(strings.TrimSpace(string(b)), "\n"), nil
 	} else if p != "" {
 		dir, _ := path.Split(p)
+		dir = strings.TrimSuffix(dir, "/")
 		return tx.recipients(dir, override)
 	} else {
 		return nil, nil
@@ -259,6 +290,11 @@ func (tx *gitPassTx) recipients(p string, override map[string][]string) ([]strin
 }
 
 func (tx *gitPassTx) Recipients(p string) ([]string, error) {
+	if gitVerboseDeubg && tx.g.debug {
+		log.Printf("Recipients(%q)", p)
+		defer log.Printf("Recipients(%q) done", p)
+	}
+
 	p = tx.clean(p)
 	return tx.recipients(p, nil)
 }
