@@ -394,7 +394,11 @@ func (tx *gitPassTxW) verify() error {
 	return nil
 }
 
-func (tx *gitPassTxW) Commit(message string) error {
+var (
+	angleBracketRemover = strings.NewReplacer("<", "", ">", "")
+)
+
+func (tx *gitPassTxW) Commit(userName, message string) error {
 	if err := tx.verify(); err != nil {
 		return err
 	}
@@ -417,9 +421,15 @@ func (tx *gitPassTxW) Commit(message string) error {
 	// var w io.Writer = io.MultiWriter(pw, os.Stdout)
 	// var w io.Writer = os.Stdout
 
+	userName = angleBracketRemover.Replace(userName)
+	hostName, err := os.Hostname()
+	if err != nil {
+		hostName = "localhost"
+	}
+
 	fmt.Fprintf(w, "commit refs/heads/%s\n", tx.branch)
 	now := time.Now()
-	fmt.Fprintf(w, "committer Pass <pass@localhost> %d %s\n", now.Unix(), now.Format("-0700"))
+	fmt.Fprintf(w, "committer %s <pass@%s> %d %s\n", userName, hostName, now.Unix(), now.Format("-0700"))
 	fmt.Fprintf(w, "data %d\n%s\n", len(message), message)
 	fmt.Fprintf(w, "from %s\n", tx.commit.Oid)
 

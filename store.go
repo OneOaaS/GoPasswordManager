@@ -148,7 +148,7 @@ type PassTxW interface {
 	SetRecipients(path string, recipients []string)
 
 	// Commit writes the changes to the repository to disk.
-	Commit(message string) error
+	Commit(userName, message string) error
 }
 
 type PassStore interface {
