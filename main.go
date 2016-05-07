@@ -123,6 +123,7 @@ func main() {
 	apiMux.HandleFuncC(pat.Get("/passPerm/*"), handleGetPerm)
 	apiMux.HandleFuncC(pat.Post("/passPerm/*"), handlePostPerm) // always POST (even for edits)
 
+	mux.HandleFuncC(pat.Get("/logout"), GetLogout)
 	mux.HandleFuncC(pat.Post("/login"), PostLogin)
 	mux.HandleC(pat.New("/api/*"), apiMux)
 
