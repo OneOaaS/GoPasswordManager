@@ -2,14 +2,8 @@
  * Created by hanchen on 4/20/16.
  */
 
-myApp.controller('listController', ['$scope', '$http', 'AuthService',
-    function ($scope, $http, AuthService) {
-        // AuthService.getUserInfo().then(function(user){
-        //     $scope.user = user.data.user;
-        // }, function(err){
-        //     $scope.error = true;
-        //     $scope.errorMessage = err;
-        // });
+myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthService',
+    function ($scope, $http, $routeParams, AuthService) {
 
         // HARDCODED DIR PLACEHOLDER
         $scope.isDir = true;
@@ -33,12 +27,6 @@ myApp.controller('listController', ['$scope', '$http', 'AuthService',
 
 myApp.controller('userController', ['$scope', '$http', 'AuthService', 'User', 'Pass',
     function ($scope, $http, AuthService, User, Pass) {
-        // AuthService.getUserInfo().then(function(user){
-        //     $scope.user = user.data.user;
-        // }, function(err){
-        //     $scope.error = true;
-        //     $scope.errorMessage = err;
-        // });
 
         $scope.user = User.me();
         $scope.passwords = Pass.get({path:'.'});
@@ -84,17 +72,13 @@ angular.module('myApp').controller('loginController',
         }]);
 
 angular.module('myApp').controller('logoutController',
-    ['$scope', '$location', 'AuthService',
-        function ($scope, $location, AuthService) {
+    ['$scope', '$location', 'AuthService', 'User',
+        function ($scope, $location, AuthService, User) {
 
-            $scope.$watch(function () { return AuthService.isLoggedIn(); },
-                function (value) {
-                    $scope.isLoggedIn = value;
-                }
-            );
+            $scope.isLoggedIn = AuthService.isLoggedIn();
 
             $scope.logout = function () {
-
+                console.log("hello logout");
                 // call logout from service
                 AuthService.logout()
                     .then(function () {
@@ -105,37 +89,6 @@ angular.module('myApp').controller('logoutController',
 
         }]);
 
-
-
-// angular.module('myApp').controller('registerController',
-//     ['$scope', '$location', 'AuthService',
-//         function ($scope, $location, AuthService) {
-//
-//             $scope.register = function () {
-//
-//                 // initial values
-//                 $scope.error = false;
-//                 $scope.disabled = true;
-//
-//                 // call register from service
-//                 AuthService.register($scope.registerForm.fullname, $scope.registerForm.username, $scope.registerForm.password)
-//                     // handle success
-//                     .then(function () {
-//                         $location.path('/login');
-//                         $scope.disabled = false;
-//                         $scope.registerForm = {};
-//                     })
-//                     // handle error
-//                     .catch(function () {
-//                         $scope.error = true;
-//                         $scope.errorMessage = "E-mail Already in Use";
-//                         $scope.disabled = false;
-//                         $scope.registerForm = {};
-//                     });
-//
-//             };
-//
-//         }]);
 
 // Filter array to be strings for display
 angular.module('myApp').filter('arrayToString', function() {

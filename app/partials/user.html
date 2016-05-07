@@ -1,11 +1,47 @@
 <div ng-controller="userController">
+    <nav class="navbar navbar-inverse">
+        <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#/">PASSSSSSWORD</a>
+            </div>
+            <ul class="nav navbar-nav">
+                <li class="active"><a href="#/user">User</a></li>
+                <li><a href="#/list">List</a></li>
+            </ul>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right" ng-controller="logoutController">
+                    <li><a ng-click="logout()">Log Out</a></li>
+                </ul>
+            </div><!-- /.navbar-collapse -->
+
+        </div><!-- /.container-fluid -->
+    </nav>
+
     <h2 id="user-name">{{ user.name }} <small>{{ user.id }}</small></h2>
 
     <button type="button" class="btn btn-primary btn-md" data-toggle="modal" data-target="#addKeyModal">Add Key</button>
     <section id="key-section">
         <ul id="key-list" class="list-group">Keys
-            <li class="list-group-item" ng-repeat="key in user.privateKeys">{{ key.key }}</li>
+            <li class="list-group-item" ng-repeat="key in user.privateKeys">{{ key.key }} <button class=""></button></li>
         </ul>
+        <table class="table table-hover table-striped">
+            <thead>
+            <tr >
+                <th class="table-header"> Key</th>
+                <th class="table-header"> Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr class="list-entry" ng-repeat="key in user.privateKeys">
+                <td>{{ key.key }}</td>
+                <td><button type="button" class="btn btn-primary" ng-click="modalSrc(course)"
+                            data-toggle="modal" data-target="#editModal">Edit</button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
     </section>
 
     <section id="password-listing">
@@ -34,6 +70,24 @@
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-default" ng-disabled="disabled" data-dismiss="modal">Add</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--EDIT MODAL FOR EDITING KEY-->
+    <div class="modal fade" id="editModal" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body row text-center">
+                    <input type="text" ng-model="editedKey">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" ng-click="editKey()" data-dismiss="modal">Submit</button>
                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                 </div>
             </div>

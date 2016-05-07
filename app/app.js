@@ -21,6 +21,11 @@ myApp.config(function ($routeProvider) {
             controller: 'userController',
             access: {restricted: true}
         })
+        .when('/list/:path*', {
+            templateUrl: '/partials/list.html',
+            controller: 'listController',
+            access: {restricted: true}
+        })
         .when('/list', {
             templateUrl: '/partials/list.html',
             controller: 'listController',

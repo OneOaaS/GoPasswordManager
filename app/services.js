@@ -3,8 +3,6 @@ angular.module('myApp').factory('AuthService',
         function ($q, $timeout, $http) {
 
             function isLoggedIn() {
-                // console.log("isloggedin?");
-                // console.log(user);
                 if(user) {
                     return true;
                 } else {
@@ -120,6 +118,11 @@ angular.module('myApp').factory('AuthService',
                 });
             }
 
+            function file(path) {
+                return $http.get('/pass/' + path);
+            }
+
+
             // create user variable
             var user = null;
 
@@ -131,7 +134,8 @@ angular.module('myApp').factory('AuthService',
                 login: login,
                 logout: logout,
                 register: register,
-                edit: edit
+                edit: edit,
+                file: file
             });
 
         }]);
