@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"path"
 	"strings"
@@ -134,8 +135,7 @@ func handlePostPass(ctx context.Context, rw http.ResponseWriter, r *http.Request
 	p := pattern.Path(ctx)
 	ps := PassFromContext(ctx)
 	u := UserFromContext(ctx)
-	tx, err := ps.BeginW()
-	if err != nil {
+	if tx, err := ps.BeginW(); err != nil {
 		rlog(ctx, "Could not start transaction: ", err)
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 		return
@@ -173,8 +173,7 @@ func handleDeletePass(ctx context.Context, rw http.ResponseWriter, r *http.Reque
 	p := pattern.Path(ctx)
 	ps := PassFromContext(ctx)
 	u := UserFromContext(ctx)
-	tx, err := ps.BeginW()
-	if err != nil {
+	if tx, err := ps.BeginW(); err != nil {
 		rlog(ctx, "Could not start transaction: ", err)
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 		return
@@ -205,16 +204,101 @@ func handleDeletePass(ctx context.Context, rw http.ResponseWriter, r *http.Reque
 	}
 }
 
+/*
+GET /api/passPerm/* - get permissions on a directory, and the list of files that would need to be reencrypted when changing permissions
+Reponse for files:
+{
+	"access": ["list","of","key","ids"],
+	"change": ["list","of","full","file","paths","that","need to be reencrypted when changing permissions"]
+}
+*/
 func handleGetPerm(ctx context.Context, rw http.ResponseWriter, r *http.Request) {
-	// p := pattern.Path(ctx)
-	// ps := PassFromContext(ctx)
-	// u := UserFromContext(ctx)
-	// tx := ps.Begin()
+	var response struct {
+		Access []string `json:"access"`
+		Change []string `json:"change"`
+	}
+	p := pattern.Path(ctx)
+	ps := PassFromContext(ctx)
+	if tx, err := ps.Begin(); err != nil {
+		rlog(ctx, "Could not start transaction: ", err)
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+		return
+	} else if recipients, err := tx.Recipients(p); err != nil {
+		rlog(ctx, "Could not get recipients: ", err)
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+		return
+	} else if affected, err := tx.GetAffectedFiles(p); err != nil {
+		rlog(ctx, "Could not get affected files: ", err)
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+		return
+	} else {
+		response.Access = recipients
+		response.Change = affected
+		if err := RenderFromContext(ctx).JSON(rw, http.StatusOK, response); err != nil {
+			rlog(ctx, "Could not render JSON: ", err)
+		}
+	}
 }
 
+/*
+POST /api/passPerm/* - set permissions on a directory
+{
+	"access": ["list","of","key","ids"],
+	"files": {
+		"full/path/to/file": "reencrypted contents, base64 encrypted"
+	}
+}
+*/
 func handlePostPerm(ctx context.Context, rw http.ResponseWriter, r *http.Request) {
-	// p := pattern.Path(ctx)
-	// ps := PassFromContext(ctx)
-	// u := UserFromContext(ctx)
-	// tx := ps.Begin()
+	p := pattern.Path(ctx)
+	ps := PassFromContext(ctx)
+	u := UserFromContext(ctx)
+	var req struct {
+		Access []string          `json:"access"`
+		Files  map[string][]byte `json:"files"`
+	}
+	if tx, err := ps.BeginW(); err != nil {
+		rlog(ctx, "Could not start transaction: ", err)
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+		return
+	} else if exists, isFile := tx.Type(p); !exists {
+		http.Error(rw, "not found", http.StatusNotFound)
+		return
+	} else if isFile {
+		http.Error(rw, "can't change permissions on a directory", http.StatusBadRequest)
+		return
+	} else if uPubKeyIDs, err := StoreFromContext(ctx).GetPublicKeyIDs(u.ID); err != nil {
+		rlog(ctx, "Could not get public keys: ", err)
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+		return
+	} else if recipients, err := tx.Recipients(p); err != nil {
+		rlog(ctx, "Could not get recipients: ", err)
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+		return
+	} else if !containsAny(recipients, uPubKeyIDs) {
+		http.Error(rw, "forbidden", http.StatusForbidden)
+		return
+	} else if affected, err := tx.GetAffectedFiles(p); err != nil {
+		rlog(ctx, "Could not get affected files: ", err)
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+		return
+	} else if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(rw, "invalid JSON", http.StatusBadRequest)
+		return
+	} else {
+		tx.SetRecipients(p, req.Access)
+		for _, f := range affected {
+			c := req.Files[f]
+			if len(c) == 0 {
+				http.Error(rw, "missing reencrypted file "+f, http.StatusInternalServerError)
+				return
+			}
+			tx.Put(f, c)
+		}
+		if err := tx.Commit(u.Name, fmt.Sprintf("Reencrypted %s to %v.", p, req.Access)); err != nil {
+			rlog(ctx, "Could not commit transaction: ", err)
+			http.Error(rw, "internal server error", http.StatusInternalServerError)
+			return
+		}
+	}
 }
