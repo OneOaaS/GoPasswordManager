@@ -11,6 +11,17 @@ import (
 	"golang.org/x/net/context"
 )
 
+func GetLogout(ctx context.Context, rw http.ResponseWriter, r *http.Request) {
+	config := ConfigFromContext(ctx)
+	http.SetCookie(rw, &http.Cookie{
+		Name:    config.CookieName,
+		Value:   "deleted",
+		Expires: time.Unix(0, 0),
+		MaxAge:  -1,
+	})
+	http.Redirect(rw, r, "/", http.StatusFound)
+}
+
 func PostLogin(ctx context.Context, rw http.ResponseWriter, r *http.Request) {
 	config := ConfigFromContext(ctx)
 
