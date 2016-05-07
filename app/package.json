@@ -1,5 +1,5 @@
 {
-  "name": "Final2",
+  "name": "cs460final",
   "dependencies": {
     "angular": "^1.5.5",
     "angular-filter": "^0.5.8",
