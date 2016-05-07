@@ -3,8 +3,8 @@ angular.module('myApp').factory('AuthService',
         function ($q, $timeout, $http) {
 
             function isLoggedIn() {
-                console.log("isloggedin?");
-                console.log(user);
+                // console.log("isloggedin?");
+                // console.log(user);
                 if(user) {
                     return true;
                 } else {
@@ -70,7 +70,8 @@ angular.module('myApp').factory('AuthService',
                 var deferred = $q.defer();
 
                 // send a get request to the server
-                $http.get('/user/logout')
+
+                $http.get('/logout')
                     // handle success
                     .success(function (data) {
                         user = false;

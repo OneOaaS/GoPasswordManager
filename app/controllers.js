@@ -31,8 +31,8 @@ myApp.controller('listController', ['$scope', '$http', 'AuthService',
         };
     }]);
 
-myApp.controller('userController', ['$scope', '$http', 'AuthService',
-    function ($scope, $http, AuthService) {
+myApp.controller('userController', ['$scope', '$http', 'AuthService', 'User', 'Pass',
+    function ($scope, $http, AuthService, User, Pass) {
         // AuthService.getUserInfo().then(function(user){
         //     $scope.user = user.data.user;
         // }, function(err){
@@ -40,9 +40,12 @@ myApp.controller('userController', ['$scope', '$http', 'AuthService',
         //     $scope.errorMessage = err;
         // });
 
-        $scope.user = {};
-        $scope.user.keys = [1, 2, 3, 4, 5];
-
+        $scope.user = User.me();
+        $scope.passwords = Pass.get({path:'.'});
+        $scope.passwords.$promise.then(function() {
+            $scope.passwords['name'] = '/';
+        });
+        
         $scope.addKey = function(){
             $scope.user.keys.push($scope.keyForm.key);
         }

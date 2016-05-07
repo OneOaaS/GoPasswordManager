@@ -1,11 +1,19 @@
 <div ng-controller="userController">
-    <h2 id="user-name">{{ user.fullname }} <small>{{ user.username }}</small></h2>
+    <h2 id="user-name">{{ user.name }} <small>{{ user.id }}</small></h2>
 
     <button type="button" class="btn btn-primary btn-md" data-toggle="modal" data-target="#addKeyModal">Add Key</button>
     <section id="key-section">
         <ul id="key-list" class="list-group">Keys
-            <li class="list-group-item" ng-repeat="key in user.keys">{{ key }}</li>
+            <li class="list-group-item" ng-repeat="key in user.privateKeys">{{ key.key }}</li>
         </ul>
+    </section>
+
+    <section id="password-listing">
+        <div ui-tree>
+            <ol ui-tree-nodes="" ng-model="passwords" id="tree-root">
+                <li ng-repeat="node in passwords" ui-tree-node ng-include="'partials/pass_node.html'"></li>
+            </ol>
+        </div>
     </section>
 
     <!--MODAL FOR ADDING KEY-->

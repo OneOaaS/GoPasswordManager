@@ -1,4 +1,4 @@
-var myApp = angular.module('myApp', ['ngRoute', 'angular.filter']).constant('_', window._);
+var myApp = angular.module('myApp', ['ngRoute', 'angular.filter', 'ngResource', 'ui.tree']).constant('_', window._);
 
 myApp.config(function ($routeProvider) {
     $routeProvider
