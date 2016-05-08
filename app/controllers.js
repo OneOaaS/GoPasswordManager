@@ -2,14 +2,16 @@
  * Created by hanchen on 4/20/16.
  */
 
-myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthService', 'Pass', 'PublicKey',
-    function ($scope, $http, $routeParams, AuthService, Pass, PublicKey) {
+myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthService', 'Pass', 'PublicKey', 'User',
+    function ($scope, $http, $routeParams, AuthService, Pass, PublicKey, User) {
 
         $scope.dirs = [];
         $scope.files = [];
         $scope.isDir = false;
         $scope.isFile = false;
         $scope.file = {};
+        $scope.me = User.me();
+        $scope.recipients = [];
 
         $scope.pathParts = [
             { name: 'root', path: '/' },
@@ -19,6 +21,7 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
         if (!path) {
             path = '.';
             $scope.isDir = true;
+            $scope.path = '/';
         } else {
             var pathParts = path.split('/');
             var pathStr = '';
@@ -29,6 +32,7 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
                     path: pathStr,
                 });
             }
+            $scope.path = '/' + path;
         }
 
         Pass.get({ path: path }).$promise.then(function (data) {
@@ -46,17 +50,14 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
                             break;
                     }
                 }
+                $scope.recipients = data.recipients;
             }
             else {
                 $scope.isFile = true;
                 $scope.isDir = false;
                 $scope.file = data;
 
-                var raw = atob(data.contents); // raw binary contents
-                var buf = new Uint8Array(raw.length);
-                for (var i = 0; i < raw.length; i++) {
-                    buf[i] = raw.charCodeAt(i);
-                }
+                var buf = b64ToU8(data.contents);
                 var message = openpgp.message.read(buf);
                 $scope.message = message;
                 $scope.recipients = [];
@@ -85,8 +86,54 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
         };
 
         $scope.addFile = function () {
-            // does something
+            var keys = $scope.recipients.join(",");
+            PublicKey.get({ ids: keys }).$promise.then(function (keys) {
+                var newKeys = [],
+                    k = Object.keys(keys),
+                    dkeys = [];
+                // transform map
+                for (var i = 0; i < k.length; i++) {
+                    if (k[i].indexOf("$") !== 0) { // skip angular info
+                        newKeys.push(keys[k[i]]);
+                    }
+                }
+
+                // decode keys
+                for (var i = 0; i < newKeys.length; i++) {
+                    var ikeys = openpgp.key.readArmored(atob(newKeys[i].armored)).keys;
+                    if (ikeys.length > 0) {
+                        dkeys.push(ikeys[0]);
+                    }
+                }
+
+                var options = {
+                    data: $scope.fileForm.password,
+                    publicKeys: dkeys
+                }
+
+                openpgp.encrypt(options).then(function (ciphertext) {
+                    var data = btoa(ciphertext.data);
+                    var path = $scope.fileForm.path + '/' + $scope.fileForm.name + '.gpg';
+                    path = path.replace(/\/+/g, '/'); // remove repeated slashes
+
+                    var pass = new Pass({ path: path, contents: data, message: 'commit from web frontend' });
+                    pass.$save().then(function () {
+                        alert('Success!');
+                    }, function () {
+                        alert('Fail!');
+                    });
+                });
+            })
         };
+
+        function b64ToU8(str) {
+            var raw = atob(str); // raw binary contents
+            var buf = new Uint8Array(raw.length);
+            for (var i = 0; i < raw.length; i++) {
+                buf[i] = raw.charCodeAt(i);
+            }
+            return buf;
+        }
     }]);
 
 myApp.controller('userController', ['$scope', '$http', 'AuthService', 'User', 'Pass',
