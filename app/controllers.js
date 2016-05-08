@@ -2,8 +2,8 @@
  * Created by hanchen on 4/20/16.
  */
 
-myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthService', 'Pass',
-    function ($scope, $http, $routeParams, AuthService, Pass) {
+myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthService', 'Pass', 'PublicKey',
+    function ($scope, $http, $routeParams, AuthService, Pass, PublicKey) {
 
         $scope.dirs = [];
         $scope.files = [];
@@ -51,6 +51,32 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
                 $scope.isFile = true;
                 $scope.isDir = false;
                 $scope.file = data;
+
+                var raw = atob(data.contents); // raw binary contents
+                var buf = new Uint8Array(raw.length);
+                for (var i = 0; i < raw.length; i++) {
+                    buf[i] = raw.charCodeAt(i);
+                }
+                var message = openpgp.message.read(buf);
+                $scope.message = message;
+                $scope.recipients = [];
+
+                var recipients = message.getEncryptionKeyIds();
+                for (var i = 0; i < recipients.length; i++) {
+                    var recipient = recipients[i].toHex().toUpperCase();
+                    // trim beginning zeros
+                    var zbegin = recipient.search(/[^0]/);
+                    if (zbegin > 0) {
+                        recipient = recipient.substr(zbegin);
+                    }
+                    $scope.recipients.push(recipient);
+                    PublicKey.get({ keyId: recipient }).$promise.then(function (r) {
+                        var idx = $scope.recipient.indexOf(recipient);
+                        if (idx >= 0) {
+                            $scope.recipients[idx] = r.user;
+                        }
+                    });
+                }
             }
         });
 
