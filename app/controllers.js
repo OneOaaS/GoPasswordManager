@@ -81,10 +81,6 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
             }
         });
 
-        $scope.addDir = function () {
-            // does something
-        };
-
         $scope.addFile = function () {
             var keys = $scope.recipients.join(",");
             PublicKey.get({ ids: keys }).$promise.then(function (keys) {
