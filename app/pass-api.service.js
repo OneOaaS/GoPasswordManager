@@ -10,7 +10,9 @@
         .factory("UserPrivateKey", ["$resource", UserPrivateKeyService])
         .factory("PublicKey", ["$resource", PublicKeyService])
         .factory("Pass", ["$resource", PassService])
-        .config(["$httpProvider", PassConfig]);
+        .config(["$httpProvider", PassConfig])
+        .factory("PassPerm", ["$resource", PassPermService])
+        .config(["$httpProvider", PassPermConfig]);
 
     function UserService($q, $resource, UserPublicKey, UserPrivateKey) {
         var User = $resource(apiLocation + "/user/:userId", null, {
@@ -78,6 +80,35 @@
             return {
                 request: function(config) {
                     var pathPattern = "/api/pass/";
+                    
+                    var uri = document.createElement("a"); // cheap URI parsing
+                    uri.href = config.url;
+                    
+                    if (uri.pathname.indexOf(pathPattern) !== 0) {
+                        // not interested in this path
+                        return config;
+                    }
+                    
+                    uri.pathname = uri.pathname.replace(/%2F/i, "/");
+                    config.url = uri.href;
+                    
+                    return config;
+                }
+            };
+        })
+    }
+    
+    function PassPermService($resource) {
+        var PassPerm = $resource(apiLocation + "/passPerm/:path");
+        return PassPerm;
+    }
+    
+    function PassPermConfig($httpProvider) {
+        // awful hack to rewrite PassPerm urls and unescape the path
+        $httpProvider.interceptors.push(function() {
+            return {
+                request: function(config) {
+                    var pathPattern = "/api/passPerm/";
                     
                     var uri = document.createElement("a"); // cheap URI parsing
                     uri.href = config.url;
