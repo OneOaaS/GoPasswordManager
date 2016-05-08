@@ -9,7 +9,8 @@
         .factory("UserPublicKey", ["$resource", UserPublicKeyService])
         .factory("UserPrivateKey", ["$resource", UserPrivateKeyService])
         .factory("PublicKey", ["$resource", PublicKeyService])
-        .factory("Pass", ["$resource", PassService]);
+        .factory("Pass", ["$resource", PassService])
+        .config(["$httpProvider", PassConfig]);
 
     function UserService($q, $resource, UserPublicKey, UserPrivateKey) {
         var User = $resource(apiLocation + "/user/:userId", null, {
@@ -65,9 +66,33 @@
         var PublicKey = $resource(apiLocation + "/publicKey/:keyId");
         return PublicKey;
     }
-    
-    function PassService($resource) {
+
+    function PassService($resource) {        
         var Pass = $resource(apiLocation + "/pass/:path");
         return Pass;
+    }
+    
+    function PassConfig($httpProvider) {
+        // awful hack to rewrite Pass urls and unescape the path
+        $httpProvider.interceptors.push(function() {
+            return {
+                request: function(config) {
+                    var pathPattern = "/api/pass/";
+                    
+                    var uri = document.createElement("a"); // cheap URI parsing
+                    uri.href = config.url;
+                    
+                    if (uri.pathname.indexOf(pathPattern) !== 0) {
+                        // not interested in this path
+                        return config;
+                    }
+                    
+                    uri.pathname = uri.pathname.replace(/%2F/i, "/");
+                    config.url = uri.href;
+                    
+                    return config;
+                }
+            };
+        })
     }
 })();

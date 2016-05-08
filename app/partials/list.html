@@ -14,23 +14,61 @@
                 <ul class="nav navbar-nav navbar-right" ng-controller="logoutController">
                     <li><a ng-click="logout()">Log Out</a></li>
                 </ul>
-            </div><!-- /.navbar-collapse -->
+            </div>
+            <!-- /.navbar-collapse -->
 
-        </div><!-- /.container-fluid -->
+        </div>
+        <!-- /.container-fluid -->
     </nav>
+    
+    <section id="breadcrumbs">
+        <ol class="breadcrumb">
+            <li ng-repeat="part in pathParts"><a ng-href="#/list{{ part.path }}">{{ part.name }}</a></li>
+        </ol>
+    </section>
 
-    <button type="button" class="btn btn-primary btn-md" data-toggle="modal" data-target="#addDirModal">Add Directory</button>
-    <button type="button" class="btn btn-primary btn-md" data-toggle="modal" data-target="#addFileModal">Add File</button>
+    <section>
+        <button type="button" class="btn btn-primary btn-md" data-toggle="modal" data-target="#addDirModal">Add Directory</button>
+        <button type="button" class="btn btn-primary btn-md" data-toggle="modal" data-target="#addFileModal">Add File</button>
+    </section>
+
     <!--LIST FOR DISPLAYING DIRECTORIES-->
-    <div ng-show="isDir">
-        <ul class="list-group">
-            <li class="list-group-item" ng-repeat="dir in dirs"><a ng-href="#/{{ dir.path }}">{{ dir.name }}</a></li>
-        </ul>
-    </div>
-    <div class="row" ng-show="isFile">
-        <h4>key</h4>
-        <div>{{ key }}</div>
-    </div>
+    <section ng-show="isDir">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Directories</h3>
+            </div>
+            <div class="panel-body">
+                <ul class="list-group" ng-show="dirs.length > 0">
+                    <li class="list-group-item" ng-repeat="dir in dirs"><a ng-href="#/list{{ dir.path }}">{{ dir.name }}</a></li>
+                </ul>
+                <div ng-show="dirs.length == 0">There doesn't seem to be anything here...</div>
+            </div>
+        </div>
+        
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Files</h3>
+            </div>
+            <div class="panel-body">
+                <ul class="list-group" ng-show="files.length > 0">
+                    <li class="list-group-item" ng-repeat="file in files"><a ng-href="#/list{{ file.path }}">{{ file.name }}</a></li>
+                </ul>
+                <div ng-show="files.length == 0">There doesn't seem to be anything here...</div>
+            </div>
+        </div>
+    </section>
+    
+    <section ng-show="isFile">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">{{ file.name }}</h3>
+            </div>
+            <div class="panel-body" style="overflow:hidden;">
+                {{ file.contents }}
+            </div>
+        </div>
+    </section>
 
     <!--MODAL FOR ADDING DIRECTORY-->
     <div class="modal fade" id="addDirModal" role="dialog">
