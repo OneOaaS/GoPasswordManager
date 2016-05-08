@@ -108,11 +108,12 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
 
                 var options = {
                     data: $scope.fileForm.password,
-                    publicKeys: dkeys
+                    publicKeys: dkeys,
+                    armor: false
                 }
 
-                openpgp.encrypt(options).then(function (ciphertext) {
-                    var data = btoa(ciphertext.data);
+                openpgp.encrypt(options).then(function (message) {
+                    var data = btoa(String.fromCharCode.apply(null, message.message.packets.write()));
                     var path = $scope.fileForm.path + '/' + $scope.fileForm.name + '.gpg';
                     path = path.replace(/\/+/g, '/'); // remove repeated slashes
 
