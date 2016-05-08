@@ -11,7 +11,8 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
         $scope.isFile = false;
         $scope.file = {};
         $scope.me = User.me();
-        $scope.recipients = [];
+        
+        $scope.fileForm = {};
 
         $scope.pathParts = [
             { name: 'root', path: '/' },
@@ -22,8 +23,9 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
             path = '.';
             $scope.isDir = true;
             $scope.path = '/';
+            $scope.fileForm.path = path;
         } else {
-            var pathParts = path.split('/');
+            var pathParts = path.replace(/\/+/g, '/').split('/');
             var pathStr = '';
             for (var i = 0; i < pathParts.length; i++) {
                 pathStr += '/' + pathParts[i];
@@ -32,7 +34,8 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
                     path: pathStr,
                 });
             }
-            $scope.path = '/' + path;
+            $scope.path = pathStr;
+            $scope.fileForm.path = pathStr;
         }
 
         Pass.get({ path: path }).$promise.then(function (data) {
@@ -50,7 +53,7 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
                             break;
                     }
                 }
-                $scope.recipients = data.recipients;
+                $scope.file = data;
             }
             else {
                 $scope.isFile = true;
@@ -60,7 +63,7 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
                 var buf = b64ToU8(data.contents);
                 var message = openpgp.message.read(buf);
                 $scope.message = message;
-                $scope.recipients = [];
+                $scope.file.recipients = [];
 
                 var recipients = message.getEncryptionKeyIds();
                 for (var i = 0; i < recipients.length; i++) {
@@ -70,11 +73,11 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
                     if (zbegin > 0) {
                         recipient = recipient.substr(zbegin);
                     }
-                    $scope.recipients.push(recipient);
+                    $scope.file.recipients.push(recipient);
                     PublicKey.get({ keyId: recipient }).$promise.then(function (r) {
-                        var idx = $scope.recipient.indexOf(recipient);
+                        var idx = $scope.file.recipients.indexOf(recipient);
                         if (idx >= 0) {
-                            $scope.recipients[idx] = r.user;
+                            $scope.file.recipients[idx] = r.user;
                         }
                     });
                 }
@@ -82,7 +85,7 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
         });
 
         $scope.addFile = function () {
-            var keys = $scope.recipients.join(",");
+            var keys = $scope.file.recipients.join(",");
             PublicKey.get({ ids: keys }).$promise.then(function (keys) {
                 var newKeys = [],
                     k = Object.keys(keys),
@@ -116,6 +119,7 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
                     var pass = new Pass({ path: path, contents: data, message: 'commit from web frontend' });
                     pass.$save().then(function () {
                         alert('Success!');
+                        $scope.fileForm = {path: $scope.path}; // clear contents
                     }, function () {
                         alert('Fail!');
                     });

@@ -64,7 +64,7 @@
                 <h3 class="panel-title">{{ file.name }}</h3>
             </div>
             <div class="panel-body" style="overflow:hidden;">
-                <strong>Recipient: </strong>{{ recipients.join(", ") }}<br/>
+                <strong>Recipients: </strong>{{ file.recipients.join(", ") }}<br/>
                 <strong>Contents: </strong>{{ file.contents }}
             </div>
         </div>
@@ -95,7 +95,7 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-success" ng-click="addFile()">Add</button>
+                    <button type="button" class="btn btn-success" ng-click="addFile()" data-dismiss="modal">Add</button>
                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                 </div>
             </div>
