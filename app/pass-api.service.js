@@ -12,7 +12,8 @@
         .factory("Pass", ["$resource", PassService])
         .config(["$httpProvider", PassConfig])
         .factory("PassPerm", ["$resource", PassPermService])
-        .config(["$httpProvider", PassPermConfig]);
+        .config(["$httpProvider", PassPermConfig])
+        .factory("Reader", ["$q", FileReaderService]);
 
     function UserService($q, $resource, UserPublicKey, UserPrivateKey) {
         var User = $resource(apiLocation + "/user/:userId", null, {
@@ -125,5 +126,28 @@
                 }
             };
         })
+    }
+
+    function FileReaderService($q) {
+        var Reader = {};
+        
+        Reader.readFile = function (file) {
+            var d = $q.defer();
+            var fr = new FileReader();
+
+            fr.onload = function (evt) {
+                d.resolve(evt.target.result);
+            };
+
+            fr.onerror = function () {
+                d.reject(this);
+            }
+
+            fr.readAsText(file);
+
+            return d.promise;
+        }
+
+        return Reader;
     }
 })();
