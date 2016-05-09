@@ -137,8 +137,8 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
         }
     }]);
 
-myApp.controller('userController', ['$scope', '$http', 'AuthService', 'User', 'Pass', 'Reader', 'UserPrivateKey',
-    function ($scope, $http, AuthService, User, Pass, Reader, UserPrivateKey) {
+myApp.controller('userController', ['$scope', '$q', '$http', 'AuthService', 'User', 'Pass', 'Reader', 'UserPrivateKey', 'UserPublicKey',
+    function ($scope, $q, $http, AuthService, User, Pass, Reader, UserPrivateKey, UserPublicKey) {
         $scope.user = User.me();
         $scope.keyForm = {};
         $scope.editKeyForm = {};
@@ -150,8 +150,23 @@ myApp.controller('userController', ['$scope', '$http', 'AuthService', 'User', 'P
             }
 
             Reader.readFile($scope.keyForm.key).then(function (data) {
-                var pk = new UserPrivateKey({ userId: $scope.user.id, body: data });
-                pk.$save().then(function () {
+                var result = openpgp.key.readArmored(data);
+                if (!result.keys || result.keys.length < 1) {
+                    // TODO: display error message
+                    return;
+                }
+
+                var key = result.keys[0];
+                if (!key.isPrivate()) {
+                    // TODO: display error message
+                    return;
+                }
+
+                // upload private key
+                var privk = new UserPrivateKey({ userId: $scope.user.id, body: data });
+                var pubk = new UserPublicKey({ userId: $scope.user.id, body: data });
+                var promises = $q.all([privk.$save(), pubk.$save()]);
+                promises.then(function () {    
                     $scope.user = User.me();
                 });
             });

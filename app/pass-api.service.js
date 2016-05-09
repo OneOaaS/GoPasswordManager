@@ -22,39 +22,67 @@
         });
         angular.extend(User.prototype, {
             getPublicKeys: function () {
-                var deferred = $q.defer();
-                this.$promise.then(function (user) {
-                    deferred.resolve(UserPublicKey.query({ userId: user.id }));
+                return this.$promise.then(function (user) {
+                    return UserPublicKey.query({ userId: user.id }).$promise.then(function (keys) {
+                        return keys;
+                    });
                 });
-                return deferred.promise;
             },
             getPublicKey: function (id) {
-                var deferred = $q.defer();
-                this.$promise.then(function (user) {
-                    deferred.resolve(UserPublicKey.query({ userId: user.id, keyId: id }));
+                return this.$promise.then(function (user) {
+                    return UserPublicKey.get({ userId: user.id, keyId: id }).$promise.then(function (key) {
+                        return key;
+                    });
                 });
-                return deferred.promise;
             },
             getPrivateKeys: function () {
-                var deferred = $q.defer();
-                this.$promise.then(function (user) {
-                    deferred.resolve(UserPrivateKey.query({ userId: user.id }));
+                return this.$promise.then(function (user) {
+                    return UserPrivateKey.query({ userId: user.id }).$promise.then(function (keys) {
+                        return keys;
+                    });
                 });
-                return deferred.promise;
             },
             getPrivateKey: function (id) {
-                var deferred = $q.defer();
-                this.$promise.then(function (user) {
-                    deferred.resolve(UserPrivateKey.query({ userId: user.id, keyId: id }));
+                return this.$promise.then(function (user) {
+                    return UserPrivateKey.query({ userId: user.id, keyId: id }).$promise.then(function (key) {
+                        return key;
+                    });
                 });
-                return deferred.promise;
+            },
+            getPrivateKeyIds: function () {
+                var keyMap = {};
+                for (var i = 0; i < this.privateKeys.length; i++) {
+                    var keys = openpgp.key.readArmored(atob(this.privateKeys[i].armored)).keys || [];
+                    for (var j = 0; j < keys.length; j++) {
+                        var ids = keys[j].getKeyIds();
+                        for (var k = 0; k < ids.length; k++) {
+                            var idStr = ids[k].toHex().toUpperCase();
+                            var idx = idStr.search(/[^0]/);
+                            if (idx >= 0) {
+                                idStr = idStr.substr(idx);
+                            }
+                            keyMap[idStr] = keys[j];
+                        }
+                    }
+                }
+                return keyMap;
             }
         });
         return User;
     }
 
     function UserPublicKeyService($resource) {
-        var UserPublicKey = $resource(apiLocation + "/user/:userId/publicKey/:keyId");
+        var UserPublicKey = $resource(apiLocation + "/user/:userId/publicKey/:keyId",
+            { userId: '@userId', keyId: '@keyId' },
+            {
+                'save': {
+                    method: 'POST',
+                    transformRequest: function (data, headers) {
+                        return data.body;
+                    },
+                    headers: { 'Content-Type': 'text/plain' }
+                }
+            });
         return UserPublicKey;
     }
 
