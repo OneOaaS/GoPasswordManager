@@ -141,6 +141,8 @@ myApp.controller('userController', ['$scope', '$http', 'AuthService', 'User', 'P
     function ($scope, $http, AuthService, User, Pass, Reader, UserPrivateKey) {
         $scope.user = User.me();
         $scope.keyForm = {};
+        $scope.editKeyForm = {};
+        $scope.selectedKeyId = null;
 
         $scope.addKey = function () {
             if (!$scope.keyForm.key) {
@@ -153,13 +155,36 @@ myApp.controller('userController', ['$scope', '$http', 'AuthService', 'User', 'P
                     $scope.user = User.me();
                 });
             });
-        }
+        };
 
         $scope.selectFile = function () {
             if ($scope.keyForm.key) {
                 $scope.keyForm.keyFileName = $scope.keyForm.key.name;
             }
-        }
+        };
+
+        $scope.editSelectKey = function (key) {
+            $scope.selectedKeyId = key.key;
+        };
+
+        $scope.editSelectFile = function () {
+            if ($scope.editKeyForm.key) {
+                $scope.editKeyForm.keyFileName = $scope.editKeyForm.key.name;
+            }
+        };
+
+        $scope.editKey = function () {
+            if (!$scope.editKeyForm.key || !$scope.selectedKeyId) {
+                return;
+            }
+
+            Reader.readFile($scope.editKeyForm.key).then(function (data) {
+                UserPrivateKey.update({ userId: $scope.user.id, keyId: $scope.selectedKeyId }, { body: data })
+                    .$promise.then(function () {
+                        $scope.user = User.me();
+                    });
+            });
+        };
     }]);
 
 // angular.module('myApp').controller('userController', ['$scope'],)

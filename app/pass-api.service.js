@@ -60,9 +60,15 @@
 
     function UserPrivateKeyService($resource) {
         var UserPrivateKey = $resource(apiLocation + "/user/:userId/privateKey/:keyId",
-            { userId: '@userId' },
+            { userId: '@userId', keyId: '@keyId' },
             {
-                'update': { method: 'PUT' },
+                'update': {
+                    method: 'PUT',
+                    transformRequest: function (data, headers) {
+                        return data.body;
+                    },
+                    headers: { 'Content-Type': 'text/plain' }
+                },
                 'save': {
                     method: 'POST',
                     transformRequest: function (data, headers) {
