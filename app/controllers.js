@@ -137,13 +137,17 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
         }
     }]);
 
-myApp.controller('userController', ['$scope', '$http', 'AuthService', 'User', 'Pass',
-    function ($scope, $http, AuthService, User, Pass) {
-
+myApp.controller('userController', ['$scope', '$http', 'AuthService', 'User', 'Pass', 'Reader',
+    function ($scope, $http, AuthService, User, Pass, Reader) {
         $scope.user = User.me();
+        $scope.keyForm = {};
 
         $scope.addKey = function () {
             $scope.user.keys.push($scope.keyForm.key);
+        }
+        
+        $scope.selectFile = function () {
+            $scope.keyForm.keyFileName = $scope.keyForm.key.name;
         }
     }]);
 
