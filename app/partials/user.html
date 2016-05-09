@@ -59,7 +59,7 @@
                             <label>Key</label>
                             <!--<input type="text" class="form-control" name="key" ng-model="keyForm.key" required>-->
                             <input type="text" class="form-control" name="keyFileName" ng-model="keyForm.keyFileName" disabled></input>
-                            <button type="button" class="btn btn-default" ngf-select="selectFile()" ng-model="keyForm.key" name="key">Select</button>
+                            <button type="button" class="btn btn-default" ngf-select="selectFile()" ng-model="keyForm.key" name="key" ngf-pattern="'*.gpg'">Select</button>
                         </div>
                     </form>
                 </div>

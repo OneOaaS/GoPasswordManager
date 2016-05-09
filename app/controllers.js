@@ -11,7 +11,7 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
         $scope.isFile = false;
         $scope.file = {};
         $scope.me = User.me();
-        
+
         $scope.fileForm = {};
 
         $scope.pathParts = [
@@ -119,7 +119,7 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
                     var pass = new Pass({ path: path, contents: data, message: 'commit from web frontend' });
                     pass.$save().then(function () {
                         alert('Success!');
-                        $scope.fileForm = {path: $scope.path}; // clear contents
+                        $scope.fileForm = { path: $scope.path }; // clear contents
                     }, function () {
                         alert('Fail!');
                     });
@@ -137,17 +137,28 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
         }
     }]);
 
-myApp.controller('userController', ['$scope', '$http', 'AuthService', 'User', 'Pass', 'Reader',
-    function ($scope, $http, AuthService, User, Pass, Reader) {
+myApp.controller('userController', ['$scope', '$http', 'AuthService', 'User', 'Pass', 'Reader', 'UserPrivateKey',
+    function ($scope, $http, AuthService, User, Pass, Reader, UserPrivateKey) {
         $scope.user = User.me();
         $scope.keyForm = {};
 
         $scope.addKey = function () {
-            $scope.user.keys.push($scope.keyForm.key);
+            if (!$scope.keyForm.key) {
+                return;
+            }
+
+            Reader.readFile($scope.keyForm.key).then(function (data) {
+                var pk = new UserPrivateKey({ userId: $scope.user.id, body: data });
+                pk.$save().then(function () {
+                    $scope.user = User.me();
+                });
+            });
         }
-        
+
         $scope.selectFile = function () {
-            $scope.keyForm.keyFileName = $scope.keyForm.key.name;
+            if ($scope.keyForm.key) {
+                $scope.keyForm.keyFileName = $scope.keyForm.key.name;
+            }
         }
     }]);
 

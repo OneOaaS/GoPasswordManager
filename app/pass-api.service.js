@@ -59,9 +59,18 @@
     }
 
     function UserPrivateKeyService($resource) {
-        var UserPrivateKey = $resource(apiLocation + "/user/:userId/privateKey/:keyId", null, {
-            'update': { method: 'PUT' }
-        });
+        var UserPrivateKey = $resource(apiLocation + "/user/:userId/privateKey/:keyId",
+            { userId: '@userId' },
+            {
+                'update': { method: 'PUT' },
+                'save': {
+                    method: 'POST',
+                    transformRequest: function (data, headers) {
+                        return data.body;
+                    },
+                    headers: { 'Content-Type': 'text/plain' }
+                }
+            });
         return UserPrivateKey;
     }
 
@@ -130,7 +139,7 @@
 
     function FileReaderService($q) {
         var Reader = {};
-        
+
         Reader.readFile = function (file) {
             var d = $q.defer();
             var fr = new FileReader();
