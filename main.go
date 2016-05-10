@@ -36,7 +36,7 @@ func main() {
 		CookieName:   "pass",
 		Dev:          true,
 	}
-	config.DB.DSN = "db.db"
+	config.DB.DSN = "file:db.db?cache=shared&mode=rwc"
 	config.DB.Driver = "sqlite3"
 	config.Git.Root = "password-store.git"
 	config.Git.Branch = "master"
