@@ -158,7 +158,7 @@ func (s DBStore) AddPublicKey(userID, keyID string, armoredKey []byte) error {
 		return ErrKeyAlreadyExists
 	} else if err != sql.ErrNoRows {
 		// allow adopting external keys
-		if _, err := tx.Exec(`UPDATE public_keys SET uid = ?, armored = ? WHERE kid = ? AND uid == NULL;`, userID, armoredKey, keyID); err != nil {
+		if _, err := tx.Exec(`UPDATE public_keys SET uid = ?, armored = ? WHERE kid = ? AND uid IS NULL;`, userID, armoredKey, keyID); err != nil {
 			tx.Rollback()
 			return err
 		}
