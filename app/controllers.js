@@ -224,6 +224,21 @@ myApp.controller('userController', ['$scope', '$q', '$http', 'AuthService', 'Use
                     });
             });
         };
+
+        $scope.deleteKey = function (key) {
+            if (!confirm("Are you sure?")) {
+                return;
+            }
+
+            var promises = [
+                UserPublicKey.delete({ userId: $scope.user.id, keyId: key.key }).$promise,
+                UserPrivateKey.delete({ userId: $scope.user.id, keyId: key.key }).$promise
+            ];
+
+            $q.all(promises).then(function () {
+                $scope.user = User.me();
+            });
+        };
     }]);
 
 // angular.module('myApp').controller('userController', ['$scope'],)

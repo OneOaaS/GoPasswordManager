@@ -26,7 +26,7 @@
     <button type="button" class="btn btn-primary btn-md" data-toggle="modal" data-target="#addKeyModal">Add Key</button>
     <section id="key-section">
         <ul id="key-list" class="list-group">Keys
-            <li class="list-group-item" ng-repeat="key in user.privateKeys">{{ key.key }} <button type="button" class="close pull-right"><span aria-hidden="true">&times;</span></button></li>
+            <li class="list-group-item" ng-repeat="key in user.privateKeys">{{ key.key }} <button type="button" class="close pull-right" ng-click="deleteKey(key)"><span aria-hidden="true">&times;</span></button></li>
         </ul>
         <table class="table table-hover table-striped">
             <thead>
