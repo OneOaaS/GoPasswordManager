@@ -50,18 +50,20 @@
                 });
             },
             getPrivateKeyIds: function () {
-                var keyMap = {};
-                for (var i = 0; i < this.privateKeys.length; i++) {
-                    var keys = openpgp.key.readArmored(atob(this.privateKeys[i].armored)).keys || [];
-                    for (var j = 0; j < keys.length; j++) {
-                        var ids = keys[j].getKeyIds();
-                        for (var k = 0; k < ids.length; k++) {
-                            var idStr = ids[k].toHex().toUpperCase();
-                            keyMap[idStr] = keys[j];
+                return this.$promise.then(function (user) {
+                    var keyMap = {};
+                    for (var i = 0; i < user.privateKeys.length; i++) {
+                        var keys = openpgp.key.readArmored(atob(user.privateKeys[i].armored)).keys || [];
+                        for (var j = 0; j < keys.length; j++) {
+                            var ids = keys[j].getKeyIds();
+                            for (var k = 0; k < ids.length; k++) {
+                                var idStr = ids[k].toHex().toUpperCase();
+                                keyMap[idStr] = keys[j];
+                            }
                         }
                     }
-                }
-                return keyMap;
+                    return keyMap;
+                });
             }
         });
         return User;

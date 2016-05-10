@@ -68,6 +68,14 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
                         }
                     }
                     $scope.file = data;
+                $scope.user.getPrivateKeyIds().then(function (myKeys) {
+                    for (var i = 0; i < data.recipients.length; i++) {
+                        if (data.recipients[i] in myKeys) {
+                            $scope.havePermissions = true;
+                            break;
+                        }
+                    }
+                });
                 }
                 else {
                     $scope.isFile = true;
@@ -138,7 +146,7 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
             }
 
             var msg = openpgp.message.read(b64ToU8($scope.file.contents));
-            var keys = $scope.user.getPrivateKeyIds();
+            $scope.user.getPrivateKeyIds().then(function (keys) {
             var msgKeys = msg.getEncryptionKeyIds();
             var key = null;
             for (var i = 0; i < msgKeys.length; i++) {
@@ -161,12 +169,13 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
 
             var options = {
                 message: msg,
-                privateKey: key,
-            }
+                    privateKey: key
+                };
 
             openpgp.decrypt(options).then(function (plaintext) {
                 $scope.contents = plaintext.data;
                 $scope.$apply(); // force update?
+                });
             });
         };
 
