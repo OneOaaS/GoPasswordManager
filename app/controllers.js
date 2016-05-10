@@ -2,8 +2,8 @@
  * Created by hanchen on 4/20/16.
  */
 
-myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthService', 'Pass', 'PublicKey', 'User',
-    function ($scope, $http, $routeParams, AuthService, Pass, PublicKey, User) {
+myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', 'AuthService', 'Pass', 'PublicKey', 'User', 'PassPerm',
+    function ($scope, $http, $q, $routeParams, AuthService, Pass, PublicKey, User, PassPerm) {
 
         $scope.dirs = [];
         $scope.files = [];
@@ -12,82 +12,67 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
         $scope.file = {};
         $scope.user = User.me();
         $scope.contents = '';
+        $scope.permissionKey = null;
 
         $scope.fileForm = {};
+        $scope.permissionForm = {};
 
         $scope.pathParts = [
             { name: 'root', path: '/' },
         ]
 
-        $scope.loadPath = function () {
-            // set defaults
-            $scope.dirs = [];
-            $scope.files = [];
-            $scope.isDir = false;
-            $scope.isFile = false;
-            $scope.file = {};
-            $scope.contents = '';
-
-            $scope.pathParts = [
-                { name: 'root', path: '/' },
-            ]
-
-            var path = $routeParams.path;
-            if (!path) {
-                path = '.';
-                $scope.isDir = true;
-                $scope.path = '/';
-                $scope.fileForm.path = path;
-            } else {
-                var pathParts = path.replace(/\/+/g, '/').split('/');
-                var pathStr = '';
-                for (var i = 0; i < pathParts.length; i++) {
-                    pathStr += '/' + pathParts[i];
-                    $scope.pathParts.push({
-                        name: pathParts[i],
-                        path: pathStr,
-                    });
-                }
-                $scope.path = pathStr;
-                $scope.fileForm.path = pathStr;
+        var path = $routeParams.path;
+        if (!path) {
+            path = '.';
+            $scope.isDir = true;
+            $scope.path = '/';
+            $scope.fileForm.path = path;
+        } else {
+            var pathParts = path.replace(/\/+/g, '/').split('/');
+            var pathStr = '';
+            for (var i = 0; i < pathParts.length; i++) {
+                pathStr += '/' + pathParts[i];
+                $scope.pathParts.push({
+                    name: pathParts[i],
+                    path: pathStr,
+                });
             }
+            $scope.path = pathStr;
+            $scope.fileForm.path = pathStr;
+        }
 
-            Pass.get({ path: path }).$promise.then(function (data) {
-                if (data.hasOwnProperty('children')) {
-                    // we have a directory
-                    $scope.isDir = true;
-                    $scope.isFile = false;
-                    for (var i = 0; i < data.children.length; i++) {
-                        switch (data.children[i].type) {
-                            case 'dir':
-                                $scope.dirs.push(data.children[i]);
-                                break;
-                            case 'file':
-                                $scope.files.push(data.children[i]);
-                                break;
-                        }
+        Pass.get({ path: path }).$promise.then(function (data) {
+            if (data.hasOwnProperty('children')) {
+                // we have a directory
+                $scope.isDir = true;
+                $scope.isFile = false;
+                for (var i = 0; i < data.children.length; i++) {
+                    switch (data.children[i].type) {
+                        case 'dir':
+                            $scope.dirs.push(data.children[i]);
+                            break;
+                        case 'file':
+                            $scope.files.push(data.children[i]);
+                            break;
                     }
-                    $scope.file = data;
+                }
+                $scope.file = data;
                 $scope.user.getPrivateKeyIds().then(function (myKeys) {
                     for (var i = 0; i < data.recipients.length; i++) {
                         if (data.recipients[i] in myKeys) {
-                            $scope.havePermissions = true;
+                            $scope.permissionKey = myKeys[data.recipients[i]];
                             break;
                         }
                     }
                 });
-                }
-                else {
-                    $scope.isFile = true;
-                    $scope.isDir = false;
-                    $scope.file = data;
-                    $scope.contents = '';
-                }
-            });
-        }
-
-        // load path
-        $scope.loadPath();
+            }
+            else {
+                $scope.isFile = true;
+                $scope.isDir = false;
+                $scope.file = data;
+                $scope.contents = '';
+            }
+        });
 
         $scope.addFile = function () {
             var keys = $scope.file.recipients.join(",");
@@ -110,14 +95,7 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
                     }
                 }
 
-                var options = {
-                    data: $scope.fileForm.password,
-                    publicKeys: dkeys,
-                    armor: false
-                }
-
-                openpgp.encrypt(options).then(function (message) {
-                    var data = btoa(String.fromCharCode.apply(null, message.message.packets.write()));
+                encryptMessage($scope.fileForm.password, dkeys).then(function (data) {
                     var path = $scope.fileForm.path + '/' + $scope.fileForm.name + '.gpg';
                     path = path.replace(/\/+/g, '/'); // remove repeated slashes
 
@@ -145,39 +123,133 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
                 return;
             }
 
-            var msg = openpgp.message.read(b64ToU8($scope.file.contents));
+            var msg = contentsToMessage($scope.file.contents);
             $scope.user.getPrivateKeyIds().then(function (keys) {
-            var msgKeys = msg.getEncryptionKeyIds();
-            var key = null;
-            for (var i = 0; i < msgKeys.length; i++) {
-                var id = msgKeys[i].toHex().toUpperCase();
-                if (id in keys) {
-                    key = keys[id];
-                    break;
+                var key = getKeyFromMessage(msg, keys);
+                if (!key) {
+                    alert('cannot decrypt this file: not permitted');
+                    return;
                 }
-            }
-            if (!key) {
-                alert('cannot decrypt this file: not permitted');
-                return;
-            }
 
-            var passphrase = prompt('passphrase for key ' + key.primaryKey.getKeyId().toHex().toUpperCase());
-            if (!key.decrypt(passphrase)) {
-                alert('failed to decrypt key: invalid password');
-                return;
-            }
+                var passphrase = prompt('passphrase for key ' + key.primaryKey.getKeyId().toHex().toUpperCase());
+                if (!key.decrypt(passphrase)) {
+                    alert('failed to decrypt key: invalid password');
+                    return;
+                }
 
-            var options = {
-                message: msg,
-                    privateKey: key
-                };
-
-            openpgp.decrypt(options).then(function (plaintext) {
-                $scope.contents = plaintext.data;
-                $scope.$apply(); // force update?
+                decryptMessage(msg, key).then(function (plaintext) {
+                    $scope.contents = plaintext;
+                    $scope.$apply(); // force update?
                 });
             });
         };
+
+        $scope.addPermission = function () {
+            if (!$scope.permissionForm.keyId || !$scope.permissionKey) {
+                return;
+            }
+
+            var newKeyId = $scope.permissionForm.keyId;
+            PassPerm.get({ path: $scope.path }).$promise.then(function (perms) {
+                var access = perms.access;
+                access.push(newKeyId);
+                PublicKey.get({ ids: access.join(',') }).$promise.then(function (keys) {
+                    if (!(newKeyId in keys)) {
+                        alert('new key not found');
+                        return;
+                    }
+                    var keyArr = [];
+                    for (var k in keys) {
+                        if (keys.hasOwnProperty(k) && k[0] !== '$') {
+                            var rKeys = openpgp.key.readArmored(atob(keys[k].armored)).keys || [];
+                            Array.prototype.push.apply(keyArr, rKeys);
+                        }
+                    }
+                    var promises = [];
+                    if (!$scope.permissionKey.getEncryptionKeyPacket().isDecrypted) {
+                        var passphrase = prompt('enter passphrase for key id ' + $scope.permissionKey.primaryKey.getKeyId().toHex().toUpperCase());
+                        if (!$scope.permissionKey.decrypt(passphrase)) {
+                            alert('invalid password');
+                            return;
+                        }
+                    }
+                    for (var i = 0; i < perms.change.length; i++) {
+                        var path = perms.change[i];
+                        (function (path) {
+                            promises.push(Pass.get({ path: decodeURIComponent(path) }).$promise.then(function (pass) {
+                                console.log('reencrypting ' + path);
+                                return reencryptMessage(pass.contents, $scope.permissionKey, keyArr).then(function (contents) {
+                                    var obj = {};
+                                    obj[path] = contents;
+                                    return obj;
+                                });
+                            }));
+                        })(path);
+                    }
+                    $q.all(promises).then(function (results) {
+                        var merged = {};
+                        for (var i = 0; i < results.length; i++) {
+                            angular.merge(merged, results[i]);
+                        }
+                        var path = $scope.path;
+                        if (path === '/') path = '.';
+                        PassPerm.save({ path: path }, { access: access, files: merged }).$promise.then(function () {
+                            alert('Success!');
+                        }, function () {
+                            alert('Fail!');
+                        });
+                    })
+                });
+            });
+        };
+
+        function getKeyFromMessage(msg, keys) {
+            var msgKeys = msg.getEncryptionKeyIds();
+            for (var i = 0; i < msgKeys.length; i++) {
+                var id = msgKeys[i].toHex().toUpperCase();
+                if (id in keys) {
+                    return keys[id];
+                }
+            }
+            return null;
+        }
+
+        function contentsToMessage(contents) {
+            return openpgp.message.read(b64ToU8(contents));
+        }
+
+        function reencryptMessage(contents, key, newKeys) {
+            return decryptMessage(contents, key).then(function (message) {
+                return encryptMessage(message, newKeys);
+            });
+        }
+
+        function decryptMessage(contents, key) {
+            if (!(contents instanceof openpgp.message.Message)) {
+                contents = contentsToMessage(contents);
+            }
+            var options = {
+                message: contents,
+                privateKey: key
+            };
+            return openpgp.decrypt(options).then(function (plaintext) {
+                return plaintext.data;
+            });
+        }
+
+        function encryptMessage(data, keys) {
+            if (!angular.isArray(keys)) {
+                keys = [keys];
+            }
+            var options = {
+                data: data,
+                publicKeys: keys,
+                armor: false
+            };
+            return openpgp.encrypt(options).then(function (message) {
+                return btoa(String.fromCharCode.apply(null, message.message.packets.write()));
+            });
+        }
 
         function b64ToU8(str) {
             var raw = atob(str); // raw binary contents
