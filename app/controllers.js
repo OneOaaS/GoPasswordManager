@@ -149,59 +149,107 @@ myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', 'Au
                 return;
             }
 
+            if (!decryptPermissionKey()) {
+                alert('invalid password');
+                return;
+            }
+
             var newKeyId = $scope.permissionForm.keyId;
             PassPerm.get({ path: $scope.path }).$promise.then(function (perms) {
+                if (perms.access.indexOf(newKeyId) >= 0) {
+                    // already have permissions
+                    return;
+                }
                 var access = perms.access;
                 access.push(newKeyId);
-                PublicKey.get({ ids: access.join(',') }).$promise.then(function (keys) {
-                    if (!(newKeyId in keys)) {
-                        alert('new key not found');
-                        return;
-                    }
-                    var keyArr = [];
-                    for (var k in keys) {
-                        if (keys.hasOwnProperty(k) && k[0] !== '$') {
-                            var rKeys = openpgp.key.readArmored(atob(keys[k].armored)).keys || [];
-                            Array.prototype.push.apply(keyArr, rKeys);
-                        }
-                    }
-                    var promises = [];
-                    if (!$scope.permissionKey.getEncryptionKeyPacket().isDecrypted) {
-                        var passphrase = prompt('enter passphrase for key id ' + $scope.permissionKey.primaryKey.getKeyId().toHex().toUpperCase());
-                        if (!$scope.permissionKey.decrypt(passphrase)) {
-                            alert('invalid password');
-                            return;
-                        }
-                    }
-                    for (var i = 0; i < perms.change.length; i++) {
-                        var path = perms.change[i];
-                        (function (path) {
-                            promises.push(Pass.get({ path: decodeURIComponent(path) }).$promise.then(function (pass) {
-                                console.log('reencrypting ' + path);
-                                return reencryptMessage(pass.contents, $scope.permissionKey, keyArr).then(function (contents) {
-                                    var obj = {};
-                                    obj[path] = contents;
-                                    return obj;
-                                });
-                            }));
-                        })(path);
-                    }
-                    $q.all(promises).then(function (results) {
-                        var merged = {};
-                        for (var i = 0; i < results.length; i++) {
-                            angular.merge(merged, results[i]);
-                        }
-                        var path = $scope.path;
-                        if (path === '/') path = '.';
-                        PassPerm.save({ path: path }, { access: access, files: merged }).$promise.then(function () {
-                            alert('Success!');
-                        }, function () {
-                            alert('Fail!');
-                        });
-                    })
+                reencrypt(perms.change, access, $scope.permissionKey).then(function () {
+                    alert('Success!');
+                }, function () {
+                    alert('Fail!');
                 });
             });
         };
+
+        $scope.deletePermission = function (recipient) {
+            if (!$scope.permissionKey) {
+                return;
+            }
+
+            if (!confirm('Are you sure?')) {
+                return;
+            }
+
+            PassPerm.get({ path: $scope.path }).$promise.then(function (perms) {
+                var idx = perms.access.indexOf(recipient);
+                if (idx < 0) {
+                    alert("recipient doesn't exist");
+                    return;
+                }
+                var access = perms.access;
+                access.splice(idx, 1);
+                if (access.length == 0) {
+                    alert('cannot remove last key');
+                    return;
+                }
+                if (!decryptPermissionKey()) {
+                    alert('invalid password');
+                    return;
+                }
+                reencrypt(perms.change, access, $scope.permissionKey).then(function () {
+                    alert('Success!');
+                }, function () {
+                    alert('Fail');
+                });
+            });
+        };
+
+        function decryptPermissionKey() {
+            if (!$scope.permissionKey.getEncryptionKeyPacket().isDecrypted) {
+                var passphrase = prompt('enter passphrase for key id ' + $scope.permissionKey.primaryKey.getKeyId().toHex().toUpperCase());
+                return $scope.permissionKey.decrypt(passphrase);
+            }
+            return true;
+        }
+
+        function reencrypt(files, pubKeys, privKey) {
+            return PublicKey.get({ ids: pubKeys.join(',') }).$promise.then(function (keys) {
+                for (var i = 0; i < pubKeys; i++) {
+                    if (!(pubKeys[i] in keys)) {
+                        return $q.reject("could not find all keys");
+                    }
+                }
+                var keyArr = [];
+                for (var k in keys) {
+                    if (keys.hasOwnProperty(k) && k[0] !== '$') {
+                        var rKeys = openpgp.key.readArmored(atob(keys[k].armored)).keys || [];
+                        Array.prototype.push.apply(keyArr, rKeys);
+                    }
+                }
+                var promises = [];
+                for (var i = 0; i < files.length; i++) {
+                    var path = files[i];
+                    (function (path) {
+                        promises.push(Pass.get({ path: decodeURIComponent(path) }).$promise.then(function (pass) {
+                            console.log('reencrypting ' + path);
+                            return reencryptMessage(pass.contents, privKey, keyArr).then(function (contents) {
+                                var obj = {};
+                                obj[path] = contents;
+                                return obj;
+                            });
+                        }));
+                    })(path);
+                }
+                return $q.all(promises).then(function (results) {
+                    var merged = {};
+                    for (var i = 0; i < results.length; i++) {
+                        angular.merge(merged, results[i]);
+                    }
+                    var path = $scope.path;
+                    if (path === '/') path = '.';
+                    return PassPerm.save({ path: path }, { access: pubKeys, files: merged }).$promise;
+                })
+            });
+        }
 
         function getKeyFromMessage(msg, keys) {
             var msgKeys = msg.getEncryptionKeyIds();
