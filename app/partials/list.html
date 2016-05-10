@@ -47,7 +47,7 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">Files</h3>
+                <h3 class="panel-title">Passwords</h3>
             </div>
             <div class="panel-body">
                 <ul class="list-group" ng-show="files.length > 0">
@@ -76,8 +76,8 @@
                 <h3 class="panel-title">{{ file.name | decodeUri }}</h3>
             </div>
             <div class="panel-body" style="overflow:hidden;">
-                <strong>Recipients: </strong>{{ file.recipients.join(", ") }}<br/>
-                <strong>Contents: </strong>{{ file.contents }}
+                <strong>Contents: </strong>{{ contents || "&lt;encrypted&gt;" }}<br>
+                <button type="button" style="margin-top:5px;" class="btn btn-default" ng-click="decryptFile()" ng-show="!contents">Decrypt</button>
             </div>
         </div>
     </section>

@@ -10,7 +10,8 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
         $scope.isDir = false;
         $scope.isFile = false;
         $scope.file = {};
-        $scope.me = User.me();
+        $scope.user = User.me();
+        $scope.contents = '';
 
         $scope.fileForm = {};
 
@@ -25,6 +26,7 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
             $scope.isDir = false;
             $scope.isFile = false;
             $scope.file = {};
+            $scope.contents = '';
 
             $scope.pathParts = [
                 { name: 'root', path: '/' },
@@ -71,28 +73,7 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
                     $scope.isFile = true;
                     $scope.isDir = false;
                     $scope.file = data;
-
-                    var buf = b64ToU8(data.contents);
-                    var message = openpgp.message.read(buf);
-                    $scope.message = message;
-                    $scope.file.recipients = [];
-
-                    var recipients = message.getEncryptionKeyIds();
-                    for (var i = 0; i < recipients.length; i++) {
-                        var recipient = recipients[i].toHex().toUpperCase();
-                        // trim beginning zeros
-                        var zbegin = recipient.search(/[^0]/);
-                        if (zbegin > 0) {
-                            recipient = recipient.substr(zbegin);
-                        }
-                        $scope.file.recipients.push(recipient);
-                        PublicKey.get({ keyId: recipient }).$promise.then(function (r) {
-                            var idx = $scope.file.recipients.indexOf(recipient);
-                            if (idx >= 0) {
-                                $scope.file.recipients[idx] = r.user;
-                            }
-                        });
-                    }
+                    $scope.contents = '';
                 }
             });
         }
@@ -149,6 +130,44 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
                     });
                 });
             })
+        };
+
+        $scope.decryptFile = function () {
+            if (!$scope.file || !$scope.file.contents) {
+                return;
+            }
+
+            var msg = openpgp.message.read(b64ToU8($scope.file.contents));
+            var keys = $scope.user.getPrivateKeyIds();
+            var msgKeys = msg.getEncryptionKeyIds();
+            var key = null;
+            for (var i = 0; i < msgKeys.length; i++) {
+                var id = msgKeys[i].toHex().toUpperCase();
+                if (id in keys) {
+                    key = keys[id];
+                    break;
+                }
+            }
+            if (!key) {
+                alert('cannot decrypt this file: not permitted');
+                return;
+            }
+
+            var passphrase = prompt('passphrase for key ' + key.primaryKey.getKeyId().toHex().toUpperCase());
+            if (!key.decrypt(passphrase)) {
+                alert('failed to decrypt key: invalid password');
+                return;
+            }
+
+            var options = {
+                message: msg,
+                privateKey: key,
+            }
+
+            openpgp.decrypt(options).then(function (plaintext) {
+                $scope.contents = plaintext.data;
+                $scope.$apply(); // force update?
+            });
         };
 
         function b64ToU8(str) {

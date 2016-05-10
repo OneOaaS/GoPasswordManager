@@ -57,10 +57,6 @@
                         var ids = keys[j].getKeyIds();
                         for (var k = 0; k < ids.length; k++) {
                             var idStr = ids[k].toHex().toUpperCase();
-                            var idx = idStr.search(/[^0]/);
-                            if (idx >= 0) {
-                                idStr = idStr.substr(idx);
-                            }
                             keyMap[idStr] = keys[j];
                         }
                     }
