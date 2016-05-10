@@ -63,7 +63,7 @@
             </div>
             <div class="panel-body">
                 <ul class="list-group" ng-show="file.recipients.length > 0">
-                    <li class="list-group-item" ng-repeat="recipient in file.recipients">{{ recipient }}</li>
+                    <li class="list-group-item" ng-repeat="recipient in file.recipients">{{ recipient }} <button type="button" class="close pull-right"><span aria-hidden="true">&times;</span></button></li>
                 </ul>
                 <div ng-show="file.recipients.length == 0">There doesn't seem to be anything here...</div>
             </div>
