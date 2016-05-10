@@ -39,7 +39,7 @@
             </div>
             <div class="panel-body">
                 <ul class="list-group" ng-show="dirs.length > 0">
-                    <li class="list-group-item" ng-repeat="dir in dirs"><a ng-href="#/list{{ dir.path }}">{{ dir.name }}</a></li>
+                    <li class="list-group-item" ng-repeat="dir in dirs | orderBy:'name'"><a ng-href="#/list{{ dir.path }}">{{ dir.name }}</a></li>
                 </ul>
                 <div ng-show="dirs.length == 0">There doesn't seem to be anything here...</div>
             </div>
@@ -51,7 +51,7 @@
             </div>
             <div class="panel-body">
                 <ul class="list-group" ng-show="files.length > 0">
-                    <li class="list-group-item" ng-repeat="file in files"><a ng-href="#/list{{ file.path }}">{{ file.name }}</a></li>
+                    <li class="list-group-item" ng-repeat="file in files | orderBy:'name'"><a ng-href="#/list{{ file.path }}">{{ file.name }}</a></li>
                 </ul>
                 <div ng-show="files.length == 0">There doesn't seem to be anything here...</div>
             </div>
@@ -63,7 +63,7 @@
             </div>
             <div class="panel-body">
                 <ul class="list-group" ng-show="file.recipients.length > 0">
-                    <li class="list-group-item" ng-repeat="recipient in file.recipients">{{ recipient }} <button type="button" class="close pull-right"><span aria-hidden="true">&times;</span></button></li>
+                    <li class="list-group-item" ng-repeat="recipient in file.recipients | orderBy">{{ recipient }} <button type="button" class="close pull-right"><span aria-hidden="true">&times;</span></button></li>
                 </ul>
                 <div ng-show="file.recipients.length == 0">There doesn't seem to be anything here...</div>
             </div>

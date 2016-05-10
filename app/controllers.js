@@ -18,71 +18,87 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
             { name: 'root', path: '/' },
         ]
 
-        var path = $routeParams.path;
-        if (!path) {
-            path = '.';
-            $scope.isDir = true;
-            $scope.path = '/';
-            $scope.fileForm.path = path;
-        } else {
-            var pathParts = path.replace(/\/+/g, '/').split('/');
-            var pathStr = '';
-            for (var i = 0; i < pathParts.length; i++) {
-                pathStr += '/' + pathParts[i];
-                $scope.pathParts.push({
-                    name: pathParts[i],
-                    path: pathStr,
-                });
-            }
-            $scope.path = pathStr;
-            $scope.fileForm.path = pathStr;
-        }
+        $scope.loadPath = function () {
+            // set defaults
+            $scope.dirs = [];
+            $scope.files = [];
+            $scope.isDir = false;
+            $scope.isFile = false;
+            $scope.file = {};
 
-        Pass.get({ path: path }).$promise.then(function (data) {
-            if (data.hasOwnProperty('children')) {
-                // we have a directory
+            $scope.pathParts = [
+                { name: 'root', path: '/' },
+            ]
+
+            var path = $routeParams.path;
+            if (!path) {
+                path = '.';
                 $scope.isDir = true;
-                $scope.isFile = false;
-                for (var i = 0; i < data.children.length; i++) {
-                    switch (data.children[i].type) {
-                        case 'dir':
-                            $scope.dirs.push(data.children[i]);
-                            break;
-                        case 'file':
-                            $scope.files.push(data.children[i]);
-                            break;
-                    }
-                }
-                $scope.file = data;
-            }
-            else {
-                $scope.isFile = true;
-                $scope.isDir = false;
-                $scope.file = data;
-
-                var buf = b64ToU8(data.contents);
-                var message = openpgp.message.read(buf);
-                $scope.message = message;
-                $scope.file.recipients = [];
-
-                var recipients = message.getEncryptionKeyIds();
-                for (var i = 0; i < recipients.length; i++) {
-                    var recipient = recipients[i].toHex().toUpperCase();
-                    // trim beginning zeros
-                    var zbegin = recipient.search(/[^0]/);
-                    if (zbegin > 0) {
-                        recipient = recipient.substr(zbegin);
-                    }
-                    $scope.file.recipients.push(recipient);
-                    PublicKey.get({ keyId: recipient }).$promise.then(function (r) {
-                        var idx = $scope.file.recipients.indexOf(recipient);
-                        if (idx >= 0) {
-                            $scope.file.recipients[idx] = r.user;
-                        }
+                $scope.path = '/';
+                $scope.fileForm.path = path;
+            } else {
+                var pathParts = path.replace(/\/+/g, '/').split('/');
+                var pathStr = '';
+                for (var i = 0; i < pathParts.length; i++) {
+                    pathStr += '/' + pathParts[i];
+                    $scope.pathParts.push({
+                        name: pathParts[i],
+                        path: pathStr,
                     });
                 }
+                $scope.path = pathStr;
+                $scope.fileForm.path = pathStr;
             }
-        });
+
+            Pass.get({ path: path }).$promise.then(function (data) {
+                if (data.hasOwnProperty('children')) {
+                    // we have a directory
+                    $scope.isDir = true;
+                    $scope.isFile = false;
+                    for (var i = 0; i < data.children.length; i++) {
+                        switch (data.children[i].type) {
+                            case 'dir':
+                                $scope.dirs.push(data.children[i]);
+                                break;
+                            case 'file':
+                                $scope.files.push(data.children[i]);
+                                break;
+                        }
+                    }
+                    $scope.file = data;
+                }
+                else {
+                    $scope.isFile = true;
+                    $scope.isDir = false;
+                    $scope.file = data;
+
+                    var buf = b64ToU8(data.contents);
+                    var message = openpgp.message.read(buf);
+                    $scope.message = message;
+                    $scope.file.recipients = [];
+
+                    var recipients = message.getEncryptionKeyIds();
+                    for (var i = 0; i < recipients.length; i++) {
+                        var recipient = recipients[i].toHex().toUpperCase();
+                        // trim beginning zeros
+                        var zbegin = recipient.search(/[^0]/);
+                        if (zbegin > 0) {
+                            recipient = recipient.substr(zbegin);
+                        }
+                        $scope.file.recipients.push(recipient);
+                        PublicKey.get({ keyId: recipient }).$promise.then(function (r) {
+                            var idx = $scope.file.recipients.indexOf(recipient);
+                            if (idx >= 0) {
+                                $scope.file.recipients[idx] = r.user;
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        // load path
+        $scope.loadPath();
 
         $scope.addFile = function () {
             var keys = $scope.file.recipients.join(",");
@@ -119,6 +135,14 @@ myApp.controller('listController', ['$scope', '$http', '$routeParams', 'AuthServ
                     var pass = new Pass({ path: path, contents: data, message: 'commit from web frontend' });
                     pass.$save().then(function () {
                         alert('Success!');
+                        var idx = _.findIndex($scope.files, function (file) { return decodeURIComponent(file.name) === $scope.fileForm.name; });
+                        if (idx < 0) {
+                            $scope.files.push({
+                                name: $scope.fileForm.name,
+                                path: path,
+                                type: 'file'
+                            });
+                        }
                         $scope.fileForm = { path: $scope.path }; // clear contents
                     }, function () {
                         alert('Fail!');
@@ -166,7 +190,7 @@ myApp.controller('userController', ['$scope', '$q', '$http', 'AuthService', 'Use
                 var privk = new UserPrivateKey({ userId: $scope.user.id, body: data });
                 var pubk = new UserPublicKey({ userId: $scope.user.id, body: data });
                 var promises = $q.all([privk.$save(), pubk.$save()]);
-                promises.then(function () {    
+                promises.then(function () {
                     $scope.user = User.me();
                 });
             });
