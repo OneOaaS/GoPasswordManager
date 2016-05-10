@@ -283,3 +283,9 @@ angular.module('myApp').filter('arrayToString', function () {
         return _.join(array, ', ');
     }
 });
+
+angular.module('myApp').filter('decodeUri', function () {
+    return function (input) {
+        return decodeURIComponent(input);
+    };
+});

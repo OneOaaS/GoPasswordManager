@@ -23,7 +23,7 @@
 
     <section id="breadcrumbs">
         <ol class="breadcrumb">
-            <li ng-repeat="part in pathParts"><a ng-href="#/list{{ part.path }}">{{ part.name }}</a></li>
+            <li ng-repeat="part in pathParts"><a ng-href="#/list{{ part.path }}">{{ part.name | decodeUri }}</a></li>
         </ol>
     </section>
 
@@ -39,7 +39,7 @@
             </div>
             <div class="panel-body">
                 <ul class="list-group" ng-show="dirs.length > 0">
-                    <li class="list-group-item" ng-repeat="dir in dirs | orderBy:'name'"><a ng-href="#/list{{ dir.path }}">{{ dir.name }}</a></li>
+                    <li class="list-group-item" ng-repeat="dir in dirs | orderBy:'name'"><a ng-href="#/list{{ dir.path }}">{{ dir.name | decodeUri }}</a></li>
                 </ul>
                 <div ng-show="dirs.length == 0">There doesn't seem to be anything here...</div>
             </div>
@@ -51,7 +51,7 @@
             </div>
             <div class="panel-body">
                 <ul class="list-group" ng-show="files.length > 0">
-                    <li class="list-group-item" ng-repeat="file in files | orderBy:'name'"><a ng-href="#/list{{ file.path }}">{{ file.name }}</a></li>
+                    <li class="list-group-item" ng-repeat="file in files | orderBy:'name'"><a ng-href="#/list{{ file.path }}">{{ file.name | decodeUri }}</a></li>
                 </ul>
                 <div ng-show="files.length == 0">There doesn't seem to be anything here...</div>
             </div>
@@ -73,7 +73,7 @@
     <section ng-show="isFile">
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">{{ file.name }}</h3>
+                <h3 class="panel-title">{{ file.name | decodeUri }}</h3>
             </div>
             <div class="panel-body" style="overflow:hidden;">
                 <strong>Recipients: </strong>{{ file.recipients.join(", ") }}<br/>
