@@ -153,6 +153,7 @@ func handlePostUserPublicKey(ctx context.Context, rw http.ResponseWriter, r *htt
 		http.Error(rw, "duplicate key", http.StatusConflict)
 		return
 	} else if err != nil {
+		rlog(ctx, "Could not update public key: ", err)
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 		return
 	} else {
