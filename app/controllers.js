@@ -207,7 +207,7 @@ myApp.controller('userController', ['$scope', '$q', '$http', 'AuthService', 'Use
 
                 // upload private key
                 var privk = new UserPrivateKey({ userId: $scope.user.id, body: data });
-                var pubk = new UserPublicKey({ userId: $scope.user.id, body: data });
+                var pubk = new UserPublicKey({ userId: $scope.user.id, body: key.toPublic().armor() });
                 var promises = $q.all([privk.$save(), pubk.$save()]);
                 promises.then(function () {
                     $scope.user = User.me();
