@@ -22,32 +22,52 @@
         });
         angular.extend(User.prototype, {
             getPublicKeys: function () {
-                return this.$promise.then(function (user) {
+                if (this.$promise) {
+                    return this.$promise.then(queryKeys);
+                }
+                return queryKeys(this);
+
+                function queryKeys(user) {
                     return UserPublicKey.query({ userId: user.id }).$promise.then(function (keys) {
                         return keys;
                     });
-                });
+                }
             },
             getPublicKey: function (id) {
-                return this.$promise.then(function (user) {
+                if (this.$promise) {
+                    return this.$promise.then(getKey);
+                }
+                return getKey(user);
+
+                function getKey(user) {
                     return UserPublicKey.get({ userId: user.id, keyId: id }).$promise.then(function (key) {
                         return key;
                     });
-                });
+                }
             },
             getPrivateKeys: function () {
-                return this.$promise.then(function (user) {
+                if (this.$promise) {
+                    return this.$promise.then(getKeys);
+                }
+                return getKeys(user);
+
+                function getKeys(user) {
                     return UserPrivateKey.query({ userId: user.id }).$promise.then(function (keys) {
                         return keys;
                     });
-                });
+                }
             },
             getPrivateKey: function (id) {
-                return this.$promise.then(function (user) {
+                if (this.$promise) {
+                    return this.$promise.then(getKey);
+                }
+                return getKey(user);
+
+                function getKey(user) {
                     return UserPrivateKey.query({ userId: user.id, keyId: id }).$promise.then(function (key) {
                         return key;
                     });
-                });
+                }
             },
             getPrivateKeyIds: function () {
                 return this.$promise.then(function (user) {
