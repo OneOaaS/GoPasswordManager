@@ -214,8 +214,8 @@ myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', '$r
                             $scope.permissionKey = myKeys[data.recipients[i]];
                             break;
                         }
-                        if (!$scope.permissionKey) $scope.haveKey = false;
                     }
+                    $scope.haveKey = !!$scope.permissionKey;
                 });
             });
         }
