@@ -17,62 +17,8 @@ myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', 'Au
         $scope.fileForm = {};
         $scope.permissionForm = {};
 
-        $scope.pathParts = [
-            { name: 'root', path: '/' },
-        ]
-
-        var path = $routeParams.path;
-        if (!path) {
-            path = '.';
-            $scope.isDir = true;
-            $scope.path = '/';
-            $scope.fileForm.path = path;
-        } else {
-            var pathParts = path.replace(/\/+/g, '/').split('/');
-            var pathStr = '';
-            for (var i = 0; i < pathParts.length; i++) {
-                pathStr += '/' + pathParts[i];
-                $scope.pathParts.push({
-                    name: pathParts[i],
-                    path: pathStr,
-                });
-            }
-            $scope.path = pathStr;
-            $scope.fileForm.path = pathStr;
-        }
-
-        Pass.get({ path: path }).$promise.then(function (data) {
-            if (data.hasOwnProperty('children')) {
-                // we have a directory
-                $scope.isDir = true;
-                $scope.isFile = false;
-                for (var i = 0; i < data.children.length; i++) {
-                    switch (data.children[i].type) {
-                        case 'dir':
-                            $scope.dirs.push(data.children[i]);
-                            break;
-                        case 'file':
-                            $scope.files.push(data.children[i]);
-                            break;
-                    }
-                }
-                $scope.file = data;
-                $scope.user.getPrivateKeyIds().then(function (myKeys) {
-                    for (var i = 0; i < data.recipients.length; i++) {
-                        if (data.recipients[i] in myKeys) {
-                            $scope.permissionKey = myKeys[data.recipients[i]];
-                            break;
-                        }
-                    }
-                });
-            }
-            else {
-                $scope.isFile = true;
-                $scope.isDir = false;
-                $scope.file = data;
-                $scope.contents = '';
-            }
-        });
+        buildPath();
+        loadPath();
 
         $scope.addFile = function () {
             var keys = $scope.file.recipients.join(",");
@@ -202,6 +148,67 @@ myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', 'Au
                 });
             });
         };
+
+        function buildPath() {
+            $scope.pathParts = [
+                { name: 'root', path: '/' },
+            ]
+
+            var path = $routeParams.path || '/';
+            path.replace(/\/+/g, '/'); // clean path
+
+            if (path !== '/') {
+                if (path[0] === '/') path = path.substr(1);
+                var pathParts = path.split('/');
+                for (var i = 0; i < pathParts.length; i++) {
+                    $scope.pathParts.push({
+                        name: pathParts[i],
+                        path: _.take(pathParts, i + 1).join('/')
+                    });
+                }
+            }
+
+            $scope.path = path;
+            $scope.fileForm.path = path;
+        }
+        
+        function loadPath() {
+            return Pass.get({ path: $scope.path }).$promise.then(function (data) {
+                if (data.hasOwnProperty('children')) {
+                    // we have a directory
+                    $scope.isDir = true;
+                    $scope.isFile = false;
+                    $scope.files = [];
+                    $scope.dirs = [];
+                    for (var i = 0; i < data.children.length; i++) {
+                        switch (data.children[i].type) {
+                            case 'dir':
+                                $scope.dirs.push(data.children[i]);
+                                break;
+                            case 'file':
+                                $scope.files.push(data.children[i]);
+                                break;
+                        }
+                    }
+                    $scope.file = data;
+                }
+                else {
+                    $scope.isFile = true;
+                    $scope.isDir = false;
+                    $scope.file = data;
+                    $scope.contents = '';
+                }
+
+                $scope.user.getPrivateKeyIds().then(function (myKeys) {
+                    for (var i = 0; i < data.recipients.length; i++) {
+                        if (data.recipients[i] in myKeys) {
+                            $scope.permissionKey = myKeys[data.recipients[i]];
+                            break;
+                        }
+                    }
+                });
+            });
+        }
 
         function decryptPermissionKey() {
             if (!$scope.permissionKey.getEncryptionKeyPacket().isDecrypted) {
