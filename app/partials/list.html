@@ -27,8 +27,12 @@
         </ol>
     </section>
 
-    <section ng-show="isDir">
+    <section ng-show="isDir && permissionKey">
         <button type="button" class="btn btn-primary btn-md" data-toggle="modal" data-target="#addFileModal">Add File</button>
+    </section>
+
+    <section ng-hide="permissionKey">
+        <div class="alert alert-danger">You do not have permissions to view or modify these files.</div>
     </section>
 
     <!--LIST FOR DISPLAYING DIRECTORIES-->
@@ -56,7 +60,7 @@
                 <div ng-show="files.length == 0">There doesn't seem to be anything here...</div>
             </div>
         </div>
-        
+
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">Permissions <button type="button" class="ng-hidden close pull-right" style="margin-top:-2px;" ng-show="permissionKey" data-toggle="modal" data-target="#addPermissionModal"><span aria-hidden="true">+</span></button></h3>
@@ -77,7 +81,7 @@
             </div>
             <div class="panel-body" style="overflow:hidden;">
                 <strong>Contents: </strong>{{ contents || "&lt;encrypted&gt;" }}<br>
-                <button type="button" style="margin-top:5px;" class="btn btn-default" ng-click="decryptFile()" ng-show="!contents">Decrypt</button>
+                <button type="button" style="margin-top:5px;" class="btn btn-default" ng-click="decryptFile()" ng-hide="contents" ng-disabled="!permissionKey">Decrypt</button>
             </div>
         </div>
     </section>
@@ -113,7 +117,7 @@
             </div>
         </div>
     </div>
-    
+
     <!--MODAL FOR ADDING PERMISSION-->
     <div class="modal fade" id="addPermissionModal" role="dialog">
         <div class="modal-dialog modal-lg" role="document">
