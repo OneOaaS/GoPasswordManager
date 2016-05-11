@@ -2,8 +2,8 @@
  * Created by hanchen on 4/20/16.
  */
 
-myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', 'AuthService', 'Pass', 'PublicKey', 'User', 'PassPerm',
-    function ($scope, $http, $q, $routeParams, AuthService, Pass, PublicKey, User, PassPerm) {
+myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', '$route', 'AuthService', 'Pass', 'PublicKey', 'User', 'PassPerm',
+    function ($scope, $http, $q, $routeParams, $route, AuthService, Pass, PublicKey, User, PassPerm) {
 
         $scope.dirs = [];
         $scope.files = [];
