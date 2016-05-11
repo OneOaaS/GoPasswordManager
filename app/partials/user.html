@@ -26,9 +26,17 @@
 
     <button type="button" class="btn btn-primary btn-md" data-toggle="modal" data-target="#addKeyModal">Add Key</button>
     <section id="key-section">
-        <ul id="key-list" class="list-group">Keys
-            <li class="list-group-item" ng-repeat="key in user.privateKeys"><a href="#" ng-click="$event.preventDefault(); editSelectKey(key)" data-toggle="modal" data-target="#editModal">{{ key.key }}</a>                <button type="button" class="close pull-right" ng-click="deleteKey(key)"><span aria-hidden="true">&times;</span></button></li>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Keys</h3>
+            </div>
+            <div class="panel-body">
+                <ul id="key-list" class="list-group" ng-show="user.privateKeys && user.privateKeys.length > 0">
+                    <li class="list-group-item" ng-repeat="key in user.privateKeys"><a href="#" ng-click="$event.preventDefault(); editSelectKey(key)" data-toggle="modal" data-target="#editModal">{{ key.key }}</a>                        <button type="button" class="close pull-right" ng-click="deleteKey(key)"><span aria-hidden="true">&times;</span></button></li>
         </ul>
+                <div ng-hide="user.privateKeys && user.privateKeys.length > 0">There doesn't seem to be anything here...</div>
+            </div>
+        </div>
         <!--<table class="table table-hover table-striped">
             <thead>
                 <tr>
