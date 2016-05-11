@@ -13,6 +13,7 @@ myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', '$r
         $scope.user = User.me();
         $scope.contents = '';
         $scope.permissionKey = null;
+        $scope.haveKey = true;
 
         $scope.fileForm = {};
         $scope.permissionForm = {};
@@ -213,6 +214,7 @@ myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', '$r
                             $scope.permissionKey = myKeys[data.recipients[i]];
                             break;
                         }
+                        if (!$scope.permissionKey) $scope.haveKey = false;
                     }
                 });
             });
