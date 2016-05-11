@@ -165,14 +165,15 @@ myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', '$r
             path.replace(/\/+/g, '/'); // clean path
 
             if (path !== '/') {
-                if (path[0] === '/') path = path.substr(1);
                 var pathParts = path.split('/');
+                if (pathParts[0] === '') pathParts.shift();
                 for (var i = 0; i < pathParts.length; i++) {
                     $scope.pathParts.push({
                         name: pathParts[i],
                         path: '/' + _.take(pathParts, i + 1).join('/')
                     });
                 }
+                if (path[0] !== '/') path = '/' + path;
             }
 
             $scope.path = path;
