@@ -332,6 +332,7 @@ myApp.controller('userController', ['$scope', '$q', '$http', 'AuthService', 'Use
         $scope.keyForm = {};
         $scope.editKeyForm = {};
         $scope.selectedKeyId = null;
+        $scope.pwForm = {};
 
         $scope.addKey = function () {
             if (!$scope.keyForm.key) {
@@ -402,6 +403,28 @@ myApp.controller('userController', ['$scope', '$q', '$http', 'AuthService', 'Use
 
             $q.all(promises).then(function () {
                 $scope.user = User.me();
+            });
+        };
+        
+        $scope.changePw = function () {
+            if (!$scope.pwForm.old || !$scope.pwForm.new || !$scope.pwForm.confirm) {
+                return;
+            }
+            
+            // TODO: make this more angular
+            if ($scope.pwForm.new !== $scope.pwForm.confirm) {
+                alert('passwords do not match');
+                return;
+            }
+            
+            var udata = {
+                oldPassword: $scope.pwForm.old,
+                password: $scope.pwForm.new
+            };
+            User.update({userId: $scope.user.id}, udata).$promise.then(function () {
+                $scope.pwForm = {};
+            }, function (err) {
+                alert('fail: ' + err.data);
             });
         };
     }]);

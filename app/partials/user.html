@@ -33,10 +33,35 @@
             <div class="panel-body">
                 <ul id="key-list" class="list-group" ng-show="user.privateKeys && user.privateKeys.length > 0">
                     <li class="list-group-item" ng-repeat="key in user.privateKeys"><a href="#" ng-click="$event.preventDefault(); editSelectKey(key)" data-toggle="modal" data-target="#editModal">{{ key.key }}</a>                        <button type="button" class="close pull-right" ng-click="deleteKey(key)"><span aria-hidden="true">&times;</span></button></li>
-        </ul>
+                </ul>
                 <div ng-hide="user.privateKeys && user.privateKeys.length > 0">There doesn't seem to be anything here...</div>
             </div>
         </div>
+        
+        <!-- change password -->
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Change Password</h3>
+            </div>
+            <div class="panel-body">
+                <form ng-submit="changePw()">
+                    <div class="form-group">
+                        <label for="password">Current Password</label>
+                        <input type="password" class="form-control" placeholder="Current Password" ng-model="pwForm.old" />
+                    </div>
+                    <div class="form-group">
+                        <label for="password">New Password</label>
+                        <input type="password" class="form-control" placeholder="New Password" ng-model="pwForm.new" />
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Confirm New Password</label>
+                        <input type="password" class="form-control" placeholder="Confirm Password" ng-model="pwForm.confirm" />
+                    </div>
+                    <button type="submit" class="btn btn-default">Submit</button>
+                </form>
+            </div>
+        </div>
+
         <!--<table class="table table-hover table-striped">
             <thead>
                 <tr>
