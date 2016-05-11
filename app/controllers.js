@@ -58,28 +58,18 @@ myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', 'Au
         };
 
         $scope.decryptFile = function () {
-            if (!$scope.file || !$scope.file.contents) {
+            if (!$scope.file || !$scope.file.contents || !$scope.permissionKey) {
                 return;
             }
 
-            var msg = contentsToMessage($scope.file.contents);
-            $scope.user.getPrivateKeyIds().then(function (keys) {
-                var key = getKeyFromMessage(msg, keys);
-                if (!key) {
-                    alert('cannot decrypt this file: not permitted');
-                    return;
-                }
+            if (!decryptPermissionKey()) {
+                alert('invalid password');
+                return;
+            }
 
-                var passphrase = prompt('passphrase for key ' + key.primaryKey.getKeyId().toHex().toUpperCase());
-                if (!key.decrypt(passphrase)) {
-                    alert('failed to decrypt key: invalid password');
-                    return;
-                }
-
-                decryptMessage(msg, key).then(function (plaintext) {
-                    $scope.contents = plaintext;
-                    $scope.$apply(); // force update?
-                });
+            decryptMessage($scope.file.contents, $scope.permissionKey).then(function (plaintext) {
+                $scope.contents = plaintext;
+                $scope.$apply(); // force update?
             });
         };
 
@@ -167,7 +157,7 @@ myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', 'Au
             $scope.path = path;
             $scope.fileForm.path = path;
         }
-        
+
         function loadPath() {
             return Pass.get({ path: $scope.path }).$promise.then(function (data) {
                 if (data.hasOwnProperty('children')) {
