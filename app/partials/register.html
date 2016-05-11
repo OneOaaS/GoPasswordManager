@@ -1,13 +1,39 @@
-<div class="col-sm-4 col-sm-offset-4">
-    <h1>Register</h1>
+<section>
+    <nav class="navbar navbar-inverse">
+        <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#/">PASSSSSSWORD</a>
+            </div>
+            <ul class="nav navbar-nav">
+                <li><a href="#/user">User</a></li>
+                <li><a href="#/list">List</a></li>
+            </ul>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right" ng-controller="logoutController">
+                    <li class="active"><a href="#/register">New User</a></li>
+                    <li><a ng-click="logout()">Log Out</a></li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+
+        </div>
+        <!-- /.container-fluid -->
+    </nav>
+</section>
+
+<div class="col-sm-4">
+    <h1>New User</h1>
     <div ng-show="error" class="alert alert-danger">{{errorMessage}}</div>
+    <div ng-show="success" class="alert alert-success">{{successMessage}}</div>
     <form class="form" ng-submit="register()">
         <div class="form-group">
             <label>Name</label>
             <input type="text" class="form-control" name="fullname" ng-model="registerForm.fullname" required>
         </div>
         <div class="form-group">
-            <label>E-mail</label>
+            <label>User ID</label>
             <input type="text" class="form-control" name="username" ng-model="registerForm.username" required>
         </div>
         <div class="form-group">
@@ -15,7 +41,7 @@
             <input type="password" class="form-control" name="password" ng-model="registerForm.password" required>
         </div>
         <div>
-            <button type="submit" class="btn btn-info" ng-disabled="disabled">Register</button>
+            <button type="submit" class="btn btn-info" ng-disabled="disabled">Create</button>
         </div>
     </form>
 </div>

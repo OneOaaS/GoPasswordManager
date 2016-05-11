@@ -455,6 +455,36 @@ angular.module('myApp').controller('logoutController',
             };
 
         }]);
+        
+angular.module('myApp').controller('registerController',
+    ['$scope', 'AuthService', 'User', function ($scope, AuthService, User) {
+        $scope.error = false;
+        $scope.success = false;
+        $scope.errorMessage = '';
+        $scope.successMessage = '';
+        $scope.registerForm = {};
+        
+        $scope.register = function() {
+            var newUser = new User({ 
+                id: $scope.registerForm.username, 
+                name: $scope.registerForm.fullname, 
+                password: $scope.registerForm.password 
+            });
+            
+            newUser.$save().then(function() {
+                // success
+                $scope.error = false;
+                $scope.successMessage = 'User created.';
+                $scope.success = true;
+                $scope.registerForm = {};
+            }, function (err) {
+                // error 
+                $scope.success = false;
+                $scope.errorMessage = err.data;
+                $scope.error = true;
+            });
+        };
+    }]);
 
 
 // Filter array to be strings for display
