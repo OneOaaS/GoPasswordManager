@@ -48,14 +48,7 @@ myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', 'Au
                     var pass = new Pass({ path: path, contents: data, message: 'commit from web frontend' });
                     pass.$save().then(function () {
                         alert('Success!');
-                        var idx = _.findIndex($scope.files, function (file) { return decodeURIComponent(file.name) === $scope.fileForm.name; });
-                        if (idx < 0) {
-                            $scope.files.push({
-                                name: $scope.fileForm.name,
-                                path: path,
-                                type: 'file'
-                            });
-                        }
+                        loadPath(); // just reload the path
                         $scope.fileForm = { path: $scope.path }; // clear contents
                     }, function () {
                         alert('Fail!');
@@ -110,6 +103,8 @@ myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', 'Au
                 access.push(newKeyId);
                 reencrypt(perms.change, access, $scope.permissionKey).then(function () {
                     alert('Success!');
+                    loadPath(); // refresh the path
+                    $scope.permissionForm = {};
                 }, function () {
                     alert('Fail!');
                 });
@@ -143,6 +138,7 @@ myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', 'Au
                 }
                 reencrypt(perms.change, access, $scope.permissionKey).then(function () {
                     alert('Success!');
+                    loadPath(); // reload the path
                 }, function () {
                     alert('Fail');
                 });
