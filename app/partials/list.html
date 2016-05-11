@@ -98,7 +98,7 @@
                     <form name="fileForm">
                         <div class="form-group">
                             <label>Path</label>
-                            <input type="text" class="form-control" name="pathname" ng-model="fileForm.path" required>
+                            <input type="text" class="form-control" name="pathname" ng-model="fileForm.path" ng-init="fileForm.path = path" required>
                         </div>
                         <div class="form-group">
                             <label>Name</label>
