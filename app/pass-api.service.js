@@ -59,6 +59,11 @@
                             for (var k = 0; k < ids.length; k++) {
                                 var idStr = ids[k].toHex().toUpperCase();
                                 keyMap[idStr] = keys[j];
+                                while (idStr[0] === '0') {
+                                    // progressively trim off leading zeros because for some reason they sometimes get dropped
+                                    idStr = idStr.substr(1);
+                                    keyMap[idStr] = keys[j];
+                                }
                             }
                         }
                     }
