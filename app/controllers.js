@@ -159,7 +159,7 @@ myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', 'Au
                 for (var i = 0; i < pathParts.length; i++) {
                     $scope.pathParts.push({
                         name: pathParts[i],
-                        path: _.take(pathParts, i + 1).join('/')
+                        path: '/' + _.take(pathParts, i + 1).join('/')
                     });
                 }
             }
