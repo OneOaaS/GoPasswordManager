@@ -134,16 +134,19 @@ myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', '$r
                     alert("recipient doesn't exist");
                     return;
                 }
+                
                 var access = perms.access;
                 access.splice(idx, 1);
-                if (access.length == 0) {
-                    alert('cannot remove last key');
+                if (access.length === 0 && $scope.path === '/') {
+                    alert('cannot remove last key in root');
                     return;
                 }
+                
                 if (!decryptPermissionKey()) {
                     alert('invalid password');
                     return;
                 }
+                
                 reencrypt(perms.change, access, $scope.permissionKey).then(function () {
                     alert('Success!');
                     loadPath(); // reload the path
@@ -237,7 +240,7 @@ myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', '$r
                     }
                 }
                 var promises = [];
-                for (var i = 0; i < files.length; i++) {
+                for (var i = 0; files && i < files.length; i++) {
                     var path = files[i];
                     (function (path) {
                         promises.push(Pass.get({ path: decodeURIComponent(path) }).$promise.then(function (pass) {
