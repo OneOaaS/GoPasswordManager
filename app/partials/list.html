@@ -55,7 +55,7 @@
             </div>
             <div class="panel-body">
                 <ul class="list-group" ng-show="files.length > 0">
-                    <li class="list-group-item" ng-repeat="file in files | orderBy:'name'"><a ng-href="#/list{{ file.path }}">{{ file.name | decodeUri }}</a></li>
+                    <li class="list-group-item" ng-repeat="file in files | orderBy:'name'"><a ng-href="#/list{{ file.path }}">{{ file.name | decodeUri }}</a><button type="button" class="close pull-right" ng-click="deleteFile(file)"><span aria-hidden="true">&times;</span></button></li>
                 </ul>
                 <div ng-show="files.length == 0">There doesn't seem to be anything here...</div>
             </div>

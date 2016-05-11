@@ -57,6 +57,24 @@ myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', 'Au
             })
         };
 
+        $scope.deleteFile = function (file) {
+            if (!confirm('Are you sure?')) {
+                return;
+            }
+
+            Pass.delete({ path: decodeURIComponent(file.path) }).$promise.then(function () {
+                // just reload the view
+                loadPath().then(null, function (err) {
+                    if (err.status && err.status === 404) {
+                        // deleting file cleared folder, so redirect up a level
+                        if ($scope.pathParts.length > 1) {
+                            $route.updateParams({ path: $scope.pathParts[$scope.pathParts.length - 2].path });
+                        }
+                    }
+                });
+            });
+        }
+
         $scope.decryptFile = function () {
             if (!$scope.file || !$scope.file.contents || !$scope.permissionKey) {
                 return;
