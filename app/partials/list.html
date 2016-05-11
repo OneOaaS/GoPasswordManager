@@ -65,7 +65,7 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">Permissions <button type="button" class="ng-hidden close pull-right" style="margin-top:-2px;" ng-show="permissionKey" data-toggle="modal" data-target="#addPermissionModal"><span aria-hidden="true">+</span></button></h3>
+                <h3 class="panel-title">Permissions <button type="button" class="ng-hidden close pull-right" style="margin-top:-2px;" ng-show="permissionKey" data-toggle="modal" data-target="#addPermissionModal" ng-click="loadKeys()"><span aria-hidden="true">+</span></button></h3>
             </div>
             <div class="panel-body">
                 <ul class="list-group" ng-show="file.recipients.length > 0">
@@ -132,7 +132,8 @@
                     <form name="permissionForm">
                         <div class="form-group">
                             <label>Key ID</label>
-                            <input type="text" class="form-control" name="keyid" ng-model="permissionForm.keyId" required>
+                            <!--<input type="text" class="form-control" name="keyid" ng-model="permissionForm.keyId" required>-->
+                            <select class="form-control" name="keyid" ng-model="permissionForm.keyId" ng-options="key.key as key.value for key in availablePubKeys"></select>
                         </div>
                     </form>
                 </div>

@@ -17,6 +17,8 @@ myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', '$r
 
         $scope.fileForm = {};
         $scope.permissionForm = {};
+        
+        $scope.availablePubKeys = [];
 
         buildPath();
         loadPath();
@@ -153,6 +155,29 @@ myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', '$r
                     loadPath(); // reload the path
                 }, function () {
                     alert('Fail');
+                });
+            });
+        };
+        
+        $scope.loadKeys = function() {
+            var pubKeys = [],
+                promises = [];
+            User.query().$promise.then(function (users) {
+                for (var i = 0; i < users.length; i++) {
+                    promises.push(users[i].getPublicKeys());
+                }
+                $q.all(promises).then(function (ukeys) {
+                    for (var i = 0; i < ukeys.length; i++) {
+                        var keys = ukeys[i],
+                            user = users[i];
+                        for (var j = 0; j < keys.length; j++) {
+                            pubKeys.push({
+                                key: keys[j].key,
+                                value: keys[j].key + ' (' + user.name + ' (' + user.id + '))'
+                            });
+                        }
+                    }
+                    $scope.availablePubKeys = pubKeys;
                 });
             });
         };
