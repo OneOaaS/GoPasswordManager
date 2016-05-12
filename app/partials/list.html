@@ -83,7 +83,10 @@
             </div>
             <div class="panel-body" style="overflow:hidden;">
                 <strong>Contents: </strong>{{ contents || "&lt;encrypted&gt;" }}<br>
-                <button type="button" style="margin-top:5px;" class="btn btn-default" ng-click="decryptFile()" ng-hide="contents" ng-disabled="!permissionKey">Decrypt</button>
+                <div style="margin-top:5px;">
+                    <button type="button" class="btn btn-default" ng-click="decryptFile()" ng-hide="contents" ng-disabled="!permissionKey">Decrypt</button>
+                    <button type="button" class="btn btn-default" data-toggle="modal" data-target="#editFileModal" ng-disabled="!contents">Edit File</button>
+                </div>
             </div>
         </div>
     </section>
@@ -114,6 +117,38 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-success" ng-click="addFile()" data-dismiss="modal">Add</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--MODAL FOR EDITING FILE-->
+    <div class="modal fade" id="editFileModal" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h3>Edit File</h3>
+                </div>
+                <div class="modal-body" id="file-modal-body">
+                    <form name="editFileForm">
+                        <div class="form-group">
+                            <label>Path</label>
+                            <input type="text" class="form-control" name="pathname" ng-model="editFileForm.path" ng-init="editFileForm.path = path" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" class="form-control" name="filename" ng-model="editFileForm.name" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" class="form-control" name="filepassword" ng-model="editFileForm.password" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" ng-click="editFile()" data-dismiss="modal">Save</button>
                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                 </div>
             </div>

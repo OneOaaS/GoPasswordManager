@@ -16,8 +16,9 @@ myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', '$r
         $scope.haveKey = true;
 
         $scope.fileForm = {};
+        $scope.editFileForm = {};
         $scope.permissionForm = {};
-        
+
         $scope.availablePubKeys = [];
 
         buildPath();
@@ -76,7 +77,48 @@ myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', '$r
                     }
                 });
             });
-        }
+        };
+
+        $scope.editFile = function () {
+            if (!$scope.file || !$scope.file.contents) {
+                // we're not even looking at a file, so return
+                return;
+            }
+
+            if (!$scope.editFileForm.password) {
+                // not gonna encrypt an empty password
+                return;
+            }
+
+            var path = $scope.path;
+            var sidx = path.lastIndexOf('/');
+            if (sidx >= 0) path = path.substr(0, sidx + 1);
+
+            // have to manually query permissions because the API returns subkeys we can't query on
+            PassPerm.get({ path: path }).$promise.then(function (perm) {
+                var access = perm.access.join(",");
+                // get keys
+                PublicKey.get({ ids: access }).$promise.then(function (keys) {
+                    var dkeys = [];
+                    for (var k in keys) {
+                        if (!keys.hasOwnProperty(k) || (typeof k === 'string' && k[0] === '$')) continue;
+                        var ikeys = openpgp.key.readArmored(atob(keys[k].armored)).keys;
+                        if (!ikeys) continue;
+                        Array.prototype.push.apply(dkeys, ikeys);
+                    }
+                    encryptMessage($scope.editFileForm.password, dkeys).then(function (data) {
+                        Pass.save({ path: $scope.path }, { contents: data, message: 'edited password ' + $scope.path + ' from web' })
+                            .$promise.then(function () {
+                                alert('Success!');
+                                $scope.contents = $scope.editFileForm.password;
+                                $scope.editFileForm = { path: $scope.path, name: $scope.file.name + '.gpg' };
+                            }, function () {
+                                alert('Fail!');
+                            });
+                    });
+                });
+            });
+        };
 
         $scope.decryptFile = function () {
             if (!$scope.file || !$scope.file.contents || !$scope.permissionKey) {
@@ -90,6 +132,9 @@ myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', '$r
 
             decryptMessage($scope.file.contents, $scope.permissionKey).then(function (plaintext) {
                 $scope.contents = plaintext;
+                $scope.editFileForm.password = plaintext;
+                $scope.editFileForm.name = $scope.file.name + '.gpg';
+                $scope.editFileForm.path = $scope.file.path;
                 $scope.$apply(); // force update?
             });
         };
@@ -137,19 +182,19 @@ myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', '$r
                     alert("recipient doesn't exist");
                     return;
                 }
-                
+
                 var access = perms.access;
                 access.splice(idx, 1);
                 if (access.length === 0 && $scope.path === '/') {
                     alert('cannot remove last key in root');
                     return;
                 }
-                
+
                 if (!decryptPermissionKey()) {
                     alert('invalid password');
                     return;
                 }
-                
+
                 reencrypt(perms.change, access, $scope.permissionKey).then(function () {
                     alert('Success!');
                     loadPath(); // reload the path
@@ -158,8 +203,8 @@ myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', '$r
                 });
             });
         };
-        
-        $scope.loadKeys = function() {
+
+        $scope.loadKeys = function () {
             var pubKeys = [],
                 promises = [];
             User.query().$promise.then(function (users) {
@@ -203,7 +248,7 @@ myApp.controller('listController', ['$scope', '$http', '$q', '$routeParams', '$r
             }
 
             $scope.path = path;
-            $scope.fileForm.path = path;
+            $scope.editFileForm.path = $scope.fileForm.path = path;
         }
 
         function loadPath() {
@@ -430,23 +475,23 @@ myApp.controller('userController', ['$scope', '$q', '$http', 'AuthService', 'Use
                 $scope.user = User.me();
             });
         };
-        
+
         $scope.changePw = function () {
             if (!$scope.pwForm.old || !$scope.pwForm.new || !$scope.pwForm.confirm) {
                 return;
             }
-            
+
             // TODO: make this more angular
             if ($scope.pwForm.new !== $scope.pwForm.confirm) {
                 alert('passwords do not match');
                 return;
             }
-            
+
             var udata = {
                 oldPassword: $scope.pwForm.old,
                 password: $scope.pwForm.new
             };
-            User.update({userId: $scope.user.id}, udata).$promise.then(function () {
+            User.update({ userId: $scope.user.id }, udata).$promise.then(function () {
                 $scope.pwForm = {};
             }, function (err) {
                 alert('fail: ' + err.data);
@@ -503,7 +548,7 @@ angular.module('myApp').controller('logoutController',
             };
 
         }]);
-        
+
 angular.module('myApp').controller('registerController',
     ['$scope', 'AuthService', 'User', function ($scope, AuthService, User) {
         $scope.error = false;
@@ -511,15 +556,15 @@ angular.module('myApp').controller('registerController',
         $scope.errorMessage = '';
         $scope.successMessage = '';
         $scope.registerForm = {};
-        
-        $scope.register = function() {
-            var newUser = new User({ 
-                id: $scope.registerForm.username, 
-                name: $scope.registerForm.fullname, 
-                password: $scope.registerForm.password 
+
+        $scope.register = function () {
+            var newUser = new User({
+                id: $scope.registerForm.username,
+                name: $scope.registerForm.fullname,
+                password: $scope.registerForm.password
             });
-            
-            newUser.$save().then(function() {
+
+            newUser.$save().then(function () {
                 // success
                 $scope.error = false;
                 $scope.successMessage = 'User created.';
