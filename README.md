@@ -5,4 +5,5 @@ Users can clone the git repository `password-store.git` located in the applicati
 The application has default credentials
  - Username: tolar2
  - Password: tolar2
+
 The default GPG key has the same password.
