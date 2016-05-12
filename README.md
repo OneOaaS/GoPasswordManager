@@ -1,6 +1,6 @@
 # GoPasswordManager
 
-A password manager written in Go and Angular.js. Passwords are encrypted with user-supplied GPG keys. The application has been designed to be compatible with the [pass](https://www.passwordstore.org/) program.
+A password manager written in Go and Angular.js. Passwords are encrypted in-browser with user-supplied GPG keys. The application has been designed to be compatible with the [pass](https://www.passwordstore.org/) program.
 Users can clone the git repository `password-store.git` located in the application root after the application has launched an interact with it before pushing changes.
 The application has default credentials
  - Username: tolar2
