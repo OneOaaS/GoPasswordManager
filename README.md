@@ -17,3 +17,5 @@ To run the application, you need to install [Golang](https://golang.org/), [Node
     $ go get .
     $ go build .
     $ ./GoProgramManager or .\GoProgramManager.exe
+    
+And navigate to http://localhost:8080/
