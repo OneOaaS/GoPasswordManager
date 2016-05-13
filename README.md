@@ -7,3 +7,13 @@ The application has default credentials
  - Password: tolar2
 
 The default GPG key has the same password.
+
+To run the application, you need to install [Golang](https://golang.org/), [Node.js](https://nodejs.org/en/), and [a GCC compiler if you're on Windows](http://tdm-gcc.tdragon.net/). Clone the repo, open a command prompt and navigate to the folder, then run
+
+    $ cd path/to/repo/GoPasswordManager
+    $ cd app
+    $ npm install
+    $ cd ..
+    $ go get .
+    $ go build .
+    $ ./GoProgramManager or .\GoProgramManager.exe
